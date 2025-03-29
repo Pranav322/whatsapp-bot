@@ -1,53 +1,54 @@
-import { User, IUser } from '../models';
+import { User, IUserModel } from '../models';
 import { UserSettings } from '../types';
 
 export class UserService {
     /**
-     * Get or create a user by phone number
+     * Get or create a user
      */
-    static async getOrCreateUser(phoneNumber: string): Promise<IUser> {
-        let user = await User.findOne({ phoneNumber });
+    static async getOrCreate(userId: string): Promise<IUserModel> {
+        let user = await User.findOne({ userId });
         
         if (!user) {
-            user = await User.create({
-                phoneNumber,
-                settings: {
-                    notificationsEnabled: true,
-                    preferredLanguage: 'en'
-                }
-            });
+            user = await User.create({ userId });
         }
-
+        
         return user;
     }
 
     /**
      * Update user's last active timestamp
      */
-    static async updateLastActive(phoneNumber: string): Promise<void> {
+    static async updateLastActive(userId: string): Promise<void> {
         await User.updateOne(
-            { phoneNumber },
-            { $set: { lastActive: new Date() } }
+            { userId },
+            { 
+                $set: { lastActive: new Date() },
+                $setOnInsert: { userId }
+            },
+            { upsert: true }
         );
     }
 
     /**
      * Update user settings
      */
-    static async updateSettings(phoneNumber: string, settings: Partial<UserSettings>): Promise<IUser | null> {
-        return await User.findOneAndUpdate(
-            { phoneNumber },
-            { $set: { 'settings': settings } },
-            { new: true }
+    static async updateSettings(userId: string, settings: Partial<IUserModel['settings']>): Promise<void> {
+        await User.updateOne(
+            { userId },
+            { 
+                $set: { 'settings': settings },
+                $setOnInsert: { userId }
+            },
+            { upsert: true }
         );
     }
 
     /**
      * Get user settings
      */
-    static async getSettings(phoneNumber: string): Promise<UserSettings | null> {
-        const user = await User.findOne({ phoneNumber });
-        return user?.settings || null;
+    static async getSettings(userId: string): Promise<IUserModel['settings']> {
+        const user = await UserService.getOrCreate(userId);
+        return user.settings;
     }
 
     /**

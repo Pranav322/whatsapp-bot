@@ -1,38 +1,43 @@
-import mongoose, { Schema, Document } from 'mongoose';
-import { UserSettings } from '../types';
+import { Document, Schema, model } from 'mongoose';
 
-export interface IUser extends Document {
-    phoneNumber: string;
-    settings: UserSettings;
-    createdAt: Date;
+export interface IUser {
+    userId: string;
     lastActive: Date;
+    settings: {
+        notificationsEnabled: boolean;
+        timezone: string;
+    };
+    createdAt: Date;
+    updatedAt: Date;
 }
 
-const userSchema = new Schema({
-    phoneNumber: {
+export interface IUserModel extends IUser, Document {}
+
+const userSchema = new Schema<IUserModel>({
+    userId: {
         type: String,
         required: true,
-        unique: true,
-        index: true
+        unique: true
+    },
+    lastActive: {
+        type: Date,
+        default: Date.now
     },
     settings: {
         notificationsEnabled: {
             type: Boolean,
             default: true
         },
-        preferredLanguage: {
+        timezone: {
             type: String,
-            default: 'en'
+            default: 'UTC'
         }
-    },
-    createdAt: {
-        type: Date,
-        default: Date.now
-    },
-    lastActive: {
-        type: Date,
-        default: Date.now
     }
+}, {
+    timestamps: true
 });
 
-export const User = mongoose.model<IUser>('User', userSchema); 
+// Create index for faster queries
+userSchema.index({ userId: 1 }, { unique: true });
+
+export const User = model<IUserModel>('User', userSchema); 
