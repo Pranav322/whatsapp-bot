@@ -37,7 +37,16 @@ const userSchema = new Schema<IUserModel>({
     timestamps: true
 });
 
-// Create index for faster queries
+// Drop any existing indexes first
+userSchema.pre('save', async function() {
+    try {
+        await this.collection.dropIndexes();
+    } catch (error) {
+        console.log('No indexes to drop');
+    }
+});
+
+// Create only the necessary index
 userSchema.index({ userId: 1 }, { unique: true });
 
 export const User = model<IUserModel>('User', userSchema); 
