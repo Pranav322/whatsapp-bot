@@ -1,0 +1,28 @@
+{
+  "name": "whatsapp-bot",
+  "version": "1.0.0",
+  "description": "A WhatsApp bot for managing reminders, todos, and notes",
+  "main": "dist/index.js",
+  "scripts": {
+    "start": "node dist/index.js",
+    "dev": "ts-node src/index.ts",
+    "build": "tsc",
+    "watch": "tsc -w"
+  },
+  "dependencies": {
+    "@hapi/boom": "^10.0.1",
+    "@whiskeysockets/baileys": "^6.17.16",
+    "dotenv": "^16.3.1",
+    "moment": "^2.29.4",
+    "mongoose": "^8.0.3",
+    "node-cron": "^3.0.3",
+    "qrcode-terminal": "^0.12.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.17.28",
+    "@types/node-cron": "^3.0.11",
+    "@types/ws": "^8.18.0",
+    "ts-node": "^10.9.1",
+    "typescript": "^5.3.3"
+  }
+}
