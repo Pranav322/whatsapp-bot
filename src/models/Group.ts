@@ -8,30 +8,29 @@ export interface IGroup {
         mentionsEnabled: boolean;
         onlyAdminsCanChange: boolean;
     };
-    adminUsers: string[];
     allowedMentions: {
         everyone: boolean;
         roles: boolean;
         users: boolean;
     };
+    adminUsers: string[];
     bannedUsers: string[];
     createdAt: Date;
     updatedAt: Date;
 }
 
-export interface IGroupModel extends Omit<IGroup, 'id'>, Document {}
+export interface IGroupModel extends IGroup, Document {}
 
 const groupSchema = new Schema<IGroupModel>({
     groupId: {
         type: String,
         required: true,
-        unique: true,
-        index: true
+        unique: true
     },
     settings: {
         allowedCommands: {
             type: [String],
-            default: ['help', 'notify', 'todo', 'note', 'timer']
+            default: ['help', 'todo', 'notify', 'note', 'timer']
         },
         notificationsEnabled: {
             type: Boolean,
@@ -46,14 +45,10 @@ const groupSchema = new Schema<IGroupModel>({
             default: true
         }
     },
-    adminUsers: {
-        type: [String],
-        default: []
-    },
     allowedMentions: {
         everyone: {
             type: Boolean,
-            default: true
+            default: false
         },
         roles: {
             type: Boolean,
@@ -64,6 +59,10 @@ const groupSchema = new Schema<IGroupModel>({
             default: true
         }
     },
+    adminUsers: {
+        type: [String],
+        default: []
+    },
     bannedUsers: {
         type: [String],
         default: []
@@ -73,7 +72,7 @@ const groupSchema = new Schema<IGroupModel>({
 });
 
 // Create indexes for faster queries
-groupSchema.index({ 'settings.allowedCommands': 1 });
+groupSchema.index({ groupId: 1 }, { unique: true });
 groupSchema.index({ adminUsers: 1 });
 groupSchema.index({ bannedUsers: 1 });
 

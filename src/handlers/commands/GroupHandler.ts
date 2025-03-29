@@ -87,7 +87,7 @@ async function handleSettings(context: CommandContext) {
                 `- Mentions: ${group.settings.mentionsEnabled ? '✅' : '❌'}`,
                 `- Admin-only changes: ${group.settings.onlyAdminsCanChange ? '✅' : '❌'}`,
                 `\n📝 Allowed Commands:`,
-                ...group.settings.allowedCommands.map(cmd => `- ${cmd}`)
+                ...group.settings.allowedCommands.map((cmd: string) => `- ${cmd}`)
             ].join('\n');
 
             await socket.sendMessage(chat, { text: settings });
