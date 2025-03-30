@@ -1,6 +1,0 @@
----
-description: what-we-are-building
-globs: 
-alwaysApply: true
----
-what-we-are-building always prefer this docuent for what we abuilding and then compare with how much we are done andwhatever is left to do and then tell me in which orderest fo tehhings shold eb doneand then start worki if i say so [WhatsAppBot-SRS.md](mdc:WhatsAppBot-SRS.md) keep the code modular and maintaneable forotherdeveloper and always work like a10x engineer
