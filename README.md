@@ -112,4 +112,4 @@ heroku ps:scale worker=1 web=0
 
 ## License
 
-This project is licensed under the MIT License - see the LICENSE file for details 
+no license
