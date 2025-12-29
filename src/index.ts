@@ -1,28 +1,16 @@
 import { config } from 'dotenv';
-import { connect } from 'mongoose';
+import { connectDatabase } from './db';
 import { startBot } from './services/bot';
 
 // Load environment variables
 config();
 
-// MongoDB connection options
-const mongoOptions = {
-    retryWrites: true,
-    w: 'majority'
-};
-
-// Connect to MongoDB
-async function connectToMongoDB() {
+// Connect to PostgreSQL
+async function connectToDatabase() {
     try {
-        const uri = process.env.MONGODB_URI;
-        if (!uri) {
-            throw new Error('MONGODB_URI environment variable is not set');
-        }
-
-        await connect(uri);
-        console.log('Connected to MongoDB successfully');
+        await connectDatabase();
     } catch (error) {
-        console.error('MongoDB connection error:', error);
+        console.error('Database connection error:', error);
         process.exit(1);
     }
 }
@@ -30,7 +18,7 @@ async function connectToMongoDB() {
 // Start the application
 async function main() {
     try {
-        await connectToMongoDB();
+        await connectToDatabase();
         await startBot();
     } catch (error) {
         console.error('Application error:', error);
@@ -50,4 +38,4 @@ process.on('unhandledRejection', (error) => {
 });
 
 // Start the app
-main(); 
+main();

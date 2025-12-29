@@ -1,4 +1,5 @@
-import { Timer, ITimerModel } from '../models';
+import { db, timers, Timer } from '../db';
+import { eq, and, gt, asc } from 'drizzle-orm';
 import { WASocket } from '@whiskeysockets/baileys';
 import * as cron from 'node-cron';
 
@@ -29,14 +30,14 @@ export class TimerService {
     /**
      * Create a new timer
      */
-    static async create(userId: string, duration: number): Promise<ITimerModel> {
+    static async create(userId: string, duration: number): Promise<Timer> {
         const endTime = new Date(Date.now() + duration * 60000); // Convert minutes to milliseconds
-        const timer = await Timer.create({
+        const [timer] = await db.insert(timers).values({
             userId,
             duration,
             endTime,
             isActive: true
-        });
+        }).returning();
 
         await TimerService.scheduleTimer(timer);
         return timer;
@@ -45,12 +46,15 @@ export class TimerService {
     /**
      * List active timers for a user
      */
-    static async list(userId: string): Promise<ITimerModel[]> {
-        return await Timer.find({
-            userId,
-            isActive: true,
-            endTime: { $gt: new Date() }
-        }).sort({ endTime: 1 });
+    static async list(userId: string): Promise<Timer[]> {
+        return await db.select()
+            .from(timers)
+            .where(and(
+                eq(timers.userId, userId),
+                eq(timers.isActive, true),
+                gt(timers.endTime, new Date())
+            ))
+            .orderBy(asc(timers.endTime));
     }
 
     /**
@@ -65,12 +69,14 @@ export class TimerService {
      * Load active timers from database
      */
     private static async loadActiveTimers() {
-        const activeTimers = await Timer.find({
-            isActive: true,
-            endTime: { $gt: new Date() }
-        });
+        const activeTimersList = await db.select()
+            .from(timers)
+            .where(and(
+                eq(timers.isActive, true),
+                gt(timers.endTime, new Date())
+            ));
 
-        for (const timer of activeTimers) {
+        for (const timer of activeTimersList) {
             await TimerService.scheduleTimer(timer);
         }
     }
@@ -78,7 +84,7 @@ export class TimerService {
     /**
      * Schedule a timer
      */
-    private static async scheduleTimer(timer: ITimerModel) {
+    private static async scheduleTimer(timer: Timer) {
         if (!TimerService.waSocket) {
             throw new Error('WhatsApp socket not initialized');
         }
@@ -113,16 +119,15 @@ export class TimerService {
      * Deactivate a timer in the database
      */
     private static async deactivateTimer(timerId: string) {
-        await Timer.updateOne(
-            { _id: timerId },
-            { $set: { isActive: false } }
-        );
+        await db.update(timers)
+            .set({ isActive: false })
+            .where(eq(timers.id, timerId));
     }
 
     /**
      * Send timer completion notification
      */
-    private static async sendTimerNotification(timer: ITimerModel) {
+    private static async sendTimerNotification(timer: Timer) {
         if (!TimerService.waSocket) return;
 
         const message = `⏰ Timer completed: ${timer.duration} minutes have passed!`;
@@ -135,4 +140,4 @@ export class TimerService {
     private static getScheduleExpression(date: Date): string {
         return `${date.getMinutes()} ${date.getHours()} ${date.getDate()} ${date.getMonth() + 1} *`;
     }
-} 
+}

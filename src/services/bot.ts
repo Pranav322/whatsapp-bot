@@ -5,15 +5,21 @@ import { handleMessage } from '../handlers/messageHandler';
 import { NotificationService } from './NotificationService';
 import { TimerService } from './TimerService';
 
+// Static WhatsApp version to avoid version mismatch issues
+const WHATSAPP_VERSION: [number, number, number] = [2, 3000, 1027934701];
+
 let sock: WASocket | undefined = undefined;
 
 async function connectToWhatsApp() {
     const { state, saveCreds } = await useMultiFileAuthState('auth_info');
 
-    // Create the socket
+    // Create the socket with static version
     sock = makeWASocket({
+        version: WHATSAPP_VERSION,
         printQRInTerminal: true,
         auth: state,
+        syncFullHistory: false, // Reduces app state sync errors
+        retryRequestDelayMs: 250, // Add delay between retries
     });
 
     // Handle connection updates
@@ -23,7 +29,7 @@ async function connectToWhatsApp() {
         if (connection === 'close') {
             const shouldReconnect = (lastDisconnect?.error as Boom)?.output?.statusCode !== DisconnectReason.loggedOut;
             console.log('Connection closed due to ', lastDisconnect?.error, ', reconnecting ', shouldReconnect);
-            
+
             if (shouldReconnect) {
                 // Clean up services before reconnecting
                 NotificationService.cleanup();

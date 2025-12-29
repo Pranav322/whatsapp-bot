@@ -20,8 +20,8 @@ export const GroupHandler: CommandHandler = {
         const { socket, chat, sender, args, isGroup } = context;
 
         if (!isGroup) {
-            await socket.sendMessage(chat, { 
-                text: '❌ This command can only be used in groups.' 
+            await socket.sendMessage(chat, {
+                text: '❌ This command can only be used in groups.'
             });
             return;
         }
@@ -53,14 +53,14 @@ export const GroupHandler: CommandHandler = {
                     break;
 
                 default:
-                    await socket.sendMessage(chat, { 
-                        text: 'Unknown subcommand. Use: settings, admin, ban, unban, or mentions.' 
+                    await socket.sendMessage(chat, {
+                        text: 'Unknown subcommand. Use: settings, admin, ban, unban, or mentions.'
                     });
             }
         } catch (error) {
             console.error('Error in group command:', error);
-            await socket.sendMessage(chat, { 
-                text: '❌ Failed to process group command. Please try again.' 
+            await socket.sendMessage(chat, {
+                text: '❌ Failed to process group command. Please try again.'
             });
         }
     }
@@ -70,8 +70,8 @@ async function handleSettings(context: CommandContext) {
     const { socket, chat, sender, args } = context;
 
     if (args.length < 2) {
-        await socket.sendMessage(chat, { 
-            text: 'Usage: !group settings <list/notifications/mentions> [on/off]' 
+        await socket.sendMessage(chat, {
+            text: 'Usage: !group settings <list/notifications/mentions> [on/off]'
         });
         return;
     }
@@ -83,11 +83,11 @@ async function handleSettings(context: CommandContext) {
         case 'list':
             const settings = [
                 `📋 Group Settings:`,
-                `- Notifications: ${group.settings.notificationsEnabled ? '✅' : '❌'}`,
-                `- Mentions: ${group.settings.mentionsEnabled ? '✅' : '❌'}`,
-                `- Admin-only changes: ${group.settings.onlyAdminsCanChange ? '✅' : '❌'}`,
+                `- Notifications: ${group.notificationsEnabled ? '✅' : '❌'}`,
+                `- Mentions: ${group.mentionsEnabled ? '✅' : '❌'}`,
+                `- Admin-only changes: ${group.onlyAdminsCanChange ? '✅' : '❌'}`,
                 `\n📝 Allowed Commands:`,
-                ...group.settings.allowedCommands.map((cmd: string) => `- ${cmd}`)
+                ...(group.allowedCommands ?? []).map((cmd: string) => `- ${cmd}`)
             ].join('\n');
 
             await socket.sendMessage(chat, { text: settings });
@@ -95,8 +95,8 @@ async function handleSettings(context: CommandContext) {
 
         case 'notifications':
             if (args.length < 3) {
-                await socket.sendMessage(chat, { 
-                    text: 'Please specify on/off for notifications.' 
+                await socket.sendMessage(chat, {
+                    text: 'Please specify on/off for notifications.'
                 });
                 return;
             }
@@ -108,8 +108,8 @@ async function handleSettings(context: CommandContext) {
                 sender
             );
 
-            await socket.sendMessage(chat, { 
-                text: notifSuccess 
+            await socket.sendMessage(chat, {
+                text: notifSuccess
                     ? `✅ Group notifications ${notifValue ? 'enabled' : 'disabled'}.`
                     : '❌ You need to be an admin to change this setting.'
             });
@@ -117,8 +117,8 @@ async function handleSettings(context: CommandContext) {
 
         case 'mentions':
             if (args.length < 3) {
-                await socket.sendMessage(chat, { 
-                    text: 'Please specify on/off for mentions.' 
+                await socket.sendMessage(chat, {
+                    text: 'Please specify on/off for mentions.'
                 });
                 return;
             }
@@ -130,16 +130,16 @@ async function handleSettings(context: CommandContext) {
                 sender
             );
 
-            await socket.sendMessage(chat, { 
-                text: mentionsSuccess 
+            await socket.sendMessage(chat, {
+                text: mentionsSuccess
                     ? `✅ Group mentions ${mentionsValue ? 'enabled' : 'disabled'}.`
                     : '❌ You need to be an admin to change this setting.'
             });
             break;
 
         default:
-            await socket.sendMessage(chat, { 
-                text: 'Unknown settings command. Use: list, notifications, or mentions.' 
+            await socket.sendMessage(chat, {
+                text: 'Unknown settings command. Use: list, notifications, or mentions.'
             });
     }
 }
@@ -148,8 +148,8 @@ async function handleAdmin(context: CommandContext) {
     const { socket, chat, sender, args, message } = context;
 
     if (args.length < 3) {
-        await socket.sendMessage(chat, { 
-            text: 'Usage: !group admin <add/remove> @user' 
+        await socket.sendMessage(chat, {
+            text: 'Usage: !group admin <add/remove> @user'
         });
         return;
     }
@@ -158,8 +158,8 @@ async function handleAdmin(context: CommandContext) {
     const mentions = message.message?.extendedTextMessage?.contextInfo?.mentionedJid || [];
 
     if (mentions.length === 0) {
-        await socket.sendMessage(chat, { 
-            text: '❌ Please mention a user to add/remove as admin.' 
+        await socket.sendMessage(chat, {
+            text: '❌ Please mention a user to add/remove as admin.'
         });
         return;
     }
@@ -170,8 +170,8 @@ async function handleAdmin(context: CommandContext) {
     switch (action) {
         case 'add':
             success = await GroupService.addAdmin(chat, targetUser, sender);
-            await socket.sendMessage(chat, { 
-                text: success 
+            await socket.sendMessage(chat, {
+                text: success
                     ? '✅ User added as admin.'
                     : '❌ Failed to add admin. Make sure you are an admin yourself.'
             });
@@ -179,16 +179,16 @@ async function handleAdmin(context: CommandContext) {
 
         case 'remove':
             success = await GroupService.removeAdmin(chat, targetUser, sender);
-            await socket.sendMessage(chat, { 
-                text: success 
+            await socket.sendMessage(chat, {
+                text: success
                     ? '✅ Admin removed.'
                     : '❌ Failed to remove admin. Make sure you are an admin yourself.'
             });
             break;
 
         default:
-            await socket.sendMessage(chat, { 
-                text: 'Unknown admin command. Use: add or remove.' 
+            await socket.sendMessage(chat, {
+                text: 'Unknown admin command. Use: add or remove.'
             });
     }
 }
@@ -197,8 +197,8 @@ async function handleBan(context: CommandContext) {
     const { socket, chat, sender, args, message } = context;
 
     if (args.length < 2) {
-        await socket.sendMessage(chat, { 
-            text: 'Usage: !group ban/unban @user' 
+        await socket.sendMessage(chat, {
+            text: 'Usage: !group ban/unban @user'
         });
         return;
     }
@@ -207,8 +207,8 @@ async function handleBan(context: CommandContext) {
     const mentions = message.message?.extendedTextMessage?.contextInfo?.mentionedJid || [];
 
     if (mentions.length === 0) {
-        await socket.sendMessage(chat, { 
-            text: '❌ Please mention a user to ban/unban.' 
+        await socket.sendMessage(chat, {
+            text: '❌ Please mention a user to ban/unban.'
         });
         return;
     }
@@ -218,15 +218,15 @@ async function handleBan(context: CommandContext) {
 
     if (action === 'ban') {
         success = await GroupService.banUser(chat, targetUser, sender);
-        await socket.sendMessage(chat, { 
-            text: success 
+        await socket.sendMessage(chat, {
+            text: success
                 ? '✅ User banned from using commands.'
                 : '❌ Failed to ban user. Make sure you are an admin.'
         });
     } else {
         success = await GroupService.unbanUser(chat, targetUser, sender);
-        await socket.sendMessage(chat, { 
-            text: success 
+        await socket.sendMessage(chat, {
+            text: success
                 ? '✅ User unbanned.'
                 : '❌ Failed to unban user. Make sure you are an admin.'
         });
@@ -237,8 +237,8 @@ async function handleMentions(context: CommandContext) {
     const { socket, chat, sender, args } = context;
 
     if (args.length < 3) {
-        await socket.sendMessage(chat, { 
-            text: 'Usage: !group mentions <everyone/users/roles> <on/off>' 
+        await socket.sendMessage(chat, {
+            text: 'Usage: !group mentions <everyone/users/roles> <on/off>'
         });
         return;
     }
@@ -273,14 +273,14 @@ async function handleMentions(context: CommandContext) {
             break;
 
         default:
-            await socket.sendMessage(chat, { 
-                text: 'Unknown mention type. Use: everyone, users, or roles.' 
+            await socket.sendMessage(chat, {
+                text: 'Unknown mention type. Use: everyone, users, or roles.'
             });
             return;
     }
 
-    await socket.sendMessage(chat, { 
-        text: success 
+    await socket.sendMessage(chat, {
+        text: success
             ? `✅ ${type} mentions ${value ? 'enabled' : 'disabled'}.`
             : '❌ You need to be an admin to change mention settings.'
     });

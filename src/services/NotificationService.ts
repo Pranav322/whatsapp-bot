@@ -1,5 +1,6 @@
 import { WASocket } from '@whiskeysockets/baileys';
-import { Reminder, Timer } from '../models';
+import { db, reminders, timers, Reminder, Timer } from '../db';
+import { eq, and, gt } from 'drizzle-orm';
 import * as cron from 'node-cron';
 
 export class NotificationService {
@@ -47,10 +48,12 @@ export class NotificationService {
      * Load active reminders
      */
     private static async loadActiveReminders() {
-        const activeReminders = await Reminder.find({
-            isCompleted: false,
-            time: { $gt: new Date() }
-        });
+        const activeReminders = await db.select()
+            .from(reminders)
+            .where(and(
+                eq(reminders.isCompleted, false),
+                gt(reminders.time, new Date())
+            ));
 
         for (const reminder of activeReminders) {
             await NotificationService.scheduleReminder(reminder);
@@ -61,12 +64,14 @@ export class NotificationService {
      * Load active timers
      */
     private static async loadActiveTimers() {
-        const activeTimers = await Timer.find({
-            isActive: true,
-            endTime: { $gt: new Date() }
-        });
+        const activeTimersList = await db.select()
+            .from(timers)
+            .where(and(
+                eq(timers.isActive, true),
+                gt(timers.endTime, new Date())
+            ));
 
-        for (const timer of activeTimers) {
+        for (const timer of activeTimersList) {
             await NotificationService.scheduleTimer(timer);
         }
     }
@@ -74,7 +79,7 @@ export class NotificationService {
     /**
      * Schedule a reminder notification
      */
-    static async scheduleReminder(reminder: any) {
+    static async scheduleReminder(reminder: Reminder) {
         if (!NotificationService.waSocket) {
             throw new Error('WhatsApp socket not initialized');
         }
@@ -93,7 +98,7 @@ export class NotificationService {
     /**
      * Schedule a timer notification
      */
-    static async scheduleTimer(timer: any) {
+    static async scheduleTimer(timer: Timer) {
         if (!NotificationService.waSocket) {
             throw new Error('WhatsApp socket not initialized');
         }
@@ -134,7 +139,7 @@ export class NotificationService {
     /**
      * Send reminder notification
      */
-    private static async sendReminderNotification(reminder: any) {
+    private static async sendReminderNotification(reminder: Reminder) {
         if (!NotificationService.waSocket) return;
 
         const message = `🔔 Reminder: ${reminder.task}`;
@@ -145,17 +150,16 @@ export class NotificationService {
                 await NotificationService.waSocket.sendMessage(reminder.groupId, { text: message });
             } else {
                 // Send to individual users
-                const recipients = [reminder.userId, ...reminder.notifyUsers];
+                const recipients = [reminder.userId, ...(reminder.notifyUsers ?? [])];
                 for (const recipient of recipients) {
                     await NotificationService.waSocket.sendMessage(recipient, { text: message });
                 }
             }
 
             // Mark reminder as completed
-            await Reminder.updateOne(
-                { _id: reminder.id },
-                { $set: { isCompleted: true } }
-            );
+            await db.update(reminders)
+                .set({ isCompleted: true })
+                .where(eq(reminders.id, reminder.id));
         } catch (error) {
             console.error('Error sending reminder notification:', error);
         }
@@ -164,7 +168,7 @@ export class NotificationService {
     /**
      * Send timer notification
      */
-    private static async sendTimerNotification(timer: any) {
+    private static async sendTimerNotification(timer: Timer) {
         if (!NotificationService.waSocket) return;
 
         const message = `⏰ Timer completed: ${timer.duration} minutes have passed!`;
@@ -173,10 +177,9 @@ export class NotificationService {
             await NotificationService.waSocket.sendMessage(timer.userId, { text: message });
 
             // Mark timer as inactive
-            await Timer.updateOne(
-                { _id: timer.id },
-                { $set: { isActive: false } }
-            );
+            await db.update(timers)
+                .set({ isActive: false })
+                .where(eq(timers.id, timer.id));
         } catch (error) {
             console.error('Error sending timer notification:', error);
         }
@@ -188,4 +191,4 @@ export class NotificationService {
     private static getScheduleExpression(date: Date): string {
         return `${date.getMinutes()} ${date.getHours()} ${date.getDate()} ${date.getMonth() + 1} *`;
     }
-} 
+}

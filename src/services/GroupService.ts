@@ -1,5 +1,19 @@
-import { Group, IGroupModel } from '../models';
+import { db, groups, Group } from '../db';
+import { eq, sql } from 'drizzle-orm';
 import { WASocket } from '@whiskeysockets/baileys';
+
+export interface GroupSettings {
+    allowedCommands: string[];
+    notificationsEnabled: boolean;
+    mentionsEnabled: boolean;
+    onlyAdminsCanChange: boolean;
+}
+
+export interface AllowedMentions {
+    everyone: boolean;
+    roles: boolean;
+    users: boolean;
+}
 
 export class GroupService {
     private static waSocket: WASocket | null = null;
@@ -14,29 +28,27 @@ export class GroupService {
     /**
      * Get or create a group
      */
-    static async getOrCreateGroup(groupId: string): Promise<IGroupModel> {
-        let group = await Group.findOne({ groupId });
-        
-        if (!group) {
-            group = await Group.create({
-                groupId,
-                settings: {
-                    allowedCommands: ['help', 'notify', 'todo', 'note', 'timer'],
-                    notificationsEnabled: true,
-                    mentionsEnabled: true,
-                    onlyAdminsCanChange: true
-                },
-                adminUsers: [],
-                allowedMentions: {
-                    everyone: true,
-                    roles: true,
-                    users: true
-                },
-                bannedUsers: []
-            });
+    static async getOrCreateGroup(groupId: string): Promise<Group> {
+        const existing = await db.select().from(groups).where(eq(groups.groupId, groupId)).limit(1);
+
+        if (existing.length > 0) {
+            return existing[0];
         }
 
-        return group;
+        const [newGroup] = await db.insert(groups).values({
+            groupId,
+            allowedCommands: ['help', 'notify', 'todo', 'note', 'timer'],
+            notificationsEnabled: true,
+            mentionsEnabled: true,
+            onlyAdminsCanChange: true,
+            adminUsers: [],
+            allowMentionEveryone: true,
+            allowMentionRoles: true,
+            allowMentionUsers: true,
+            bannedUsers: []
+        }).returning();
+
+        return newGroup;
     }
 
     /**
@@ -44,7 +56,7 @@ export class GroupService {
      */
     static async isCommandAllowed(groupId: string, commandName: string): Promise<boolean> {
         const group = await GroupService.getOrCreateGroup(groupId);
-        return group.settings.allowedCommands.includes(commandName.toLowerCase());
+        return (group.allowedCommands ?? []).includes(commandName.toLowerCase());
     }
 
     /**
@@ -52,7 +64,7 @@ export class GroupService {
      */
     static async isUserAdmin(groupId: string, userId: string): Promise<boolean> {
         const group = await GroupService.getOrCreateGroup(groupId);
-        return group.adminUsers.includes(userId);
+        return (group.adminUsers ?? []).includes(userId);
     }
 
     /**
@@ -60,7 +72,7 @@ export class GroupService {
      */
     static async isUserBanned(groupId: string, userId: string): Promise<boolean> {
         const group = await GroupService.getOrCreateGroup(groupId);
-        return group.bannedUsers.includes(userId);
+        return (group.bannedUsers ?? []).includes(userId);
     }
 
     /**
@@ -68,17 +80,17 @@ export class GroupService {
      */
     static async addAdmin(groupId: string, userId: string, byUserId: string): Promise<boolean> {
         const group = await GroupService.getOrCreateGroup(groupId);
-        
+
         // Only existing admins can add new admins
-        if (!group.adminUsers.includes(byUserId)) {
+        if (!(group.adminUsers ?? []).includes(byUserId)) {
             return false;
         }
 
-        if (!group.adminUsers.includes(userId)) {
-            await Group.updateOne(
-                { groupId },
-                { $push: { adminUsers: userId } }
-            );
+        if (!(group.adminUsers ?? []).includes(userId)) {
+            const newAdmins = [...(group.adminUsers ?? []), userId];
+            await db.update(groups)
+                .set({ adminUsers: newAdmins, updatedAt: new Date() })
+                .where(eq(groups.groupId, groupId));
             return true;
         }
 
@@ -90,17 +102,17 @@ export class GroupService {
      */
     static async removeAdmin(groupId: string, userId: string, byUserId: string): Promise<boolean> {
         const group = await GroupService.getOrCreateGroup(groupId);
-        
+
         // Only existing admins can remove admins
-        if (!group.adminUsers.includes(byUserId)) {
+        if (!(group.adminUsers ?? []).includes(byUserId)) {
             return false;
         }
 
-        if (group.adminUsers.includes(userId)) {
-            await Group.updateOne(
-                { groupId },
-                { $pull: { adminUsers: userId } }
-            );
+        if ((group.adminUsers ?? []).includes(userId)) {
+            const newAdmins = (group.adminUsers ?? []).filter(id => id !== userId);
+            await db.update(groups)
+                .set({ adminUsers: newAdmins, updatedAt: new Date() })
+                .where(eq(groups.groupId, groupId));
             return true;
         }
 
@@ -112,17 +124,17 @@ export class GroupService {
      */
     static async banUser(groupId: string, userId: string, byUserId: string): Promise<boolean> {
         const group = await GroupService.getOrCreateGroup(groupId);
-        
+
         // Only admins can ban users
-        if (!group.adminUsers.includes(byUserId)) {
+        if (!(group.adminUsers ?? []).includes(byUserId)) {
             return false;
         }
 
-        if (!group.bannedUsers.includes(userId)) {
-            await Group.updateOne(
-                { groupId },
-                { $push: { bannedUsers: userId } }
-            );
+        if (!(group.bannedUsers ?? []).includes(userId)) {
+            const newBanned = [...(group.bannedUsers ?? []), userId];
+            await db.update(groups)
+                .set({ bannedUsers: newBanned, updatedAt: new Date() })
+                .where(eq(groups.groupId, groupId));
             return true;
         }
 
@@ -134,17 +146,17 @@ export class GroupService {
      */
     static async unbanUser(groupId: string, userId: string, byUserId: string): Promise<boolean> {
         const group = await GroupService.getOrCreateGroup(groupId);
-        
+
         // Only admins can unban users
-        if (!group.adminUsers.includes(byUserId)) {
+        if (!(group.adminUsers ?? []).includes(byUserId)) {
             return false;
         }
 
-        if (group.bannedUsers.includes(userId)) {
-            await Group.updateOne(
-                { groupId },
-                { $pull: { bannedUsers: userId } }
-            );
+        if ((group.bannedUsers ?? []).includes(userId)) {
+            const newBanned = (group.bannedUsers ?? []).filter(id => id !== userId);
+            await db.update(groups)
+                .set({ bannedUsers: newBanned, updatedAt: new Date() })
+                .where(eq(groups.groupId, groupId));
             return true;
         }
 
@@ -156,20 +168,22 @@ export class GroupService {
      */
     static async updateSettings(
         groupId: string,
-        settings: Partial<IGroupModel['settings']>,
+        settings: Partial<GroupSettings>,
         byUserId: string
     ): Promise<boolean> {
         const group = await GroupService.getOrCreateGroup(groupId);
-        
+
         // Check if user has permission to change settings
-        if (group.settings.onlyAdminsCanChange && !group.adminUsers.includes(byUserId)) {
+        if (group.onlyAdminsCanChange && !(group.adminUsers ?? []).includes(byUserId)) {
             return false;
         }
 
-        await Group.updateOne(
-            { groupId },
-            { $set: { 'settings': { ...group.settings, ...settings } } }
-        );
+        await db.update(groups)
+            .set({
+                ...settings,
+                updatedAt: new Date()
+            })
+            .where(eq(groups.groupId, groupId));
 
         return true;
     }
@@ -179,20 +193,24 @@ export class GroupService {
      */
     static async updateMentionSettings(
         groupId: string,
-        settings: Partial<IGroupModel['allowedMentions']>,
+        settings: Partial<AllowedMentions>,
         byUserId: string
     ): Promise<boolean> {
         const group = await GroupService.getOrCreateGroup(groupId);
-        
+
         // Only admins can change mention settings
-        if (!group.adminUsers.includes(byUserId)) {
+        if (!(group.adminUsers ?? []).includes(byUserId)) {
             return false;
         }
 
-        await Group.updateOne(
-            { groupId },
-            { $set: { 'allowedMentions': { ...group.allowedMentions, ...settings } } }
-        );
+        const updateData: Record<string, any> = { updatedAt: new Date() };
+        if (settings.everyone !== undefined) updateData.allowMentionEveryone = settings.everyone;
+        if (settings.roles !== undefined) updateData.allowMentionRoles = settings.roles;
+        if (settings.users !== undefined) updateData.allowMentionUsers = settings.users;
+
+        await db.update(groups)
+            .set(updateData)
+            .where(eq(groups.groupId, groupId));
 
         return true;
     }
@@ -217,27 +235,27 @@ export class GroupService {
         const group = await GroupService.getOrCreateGroup(groupId);
 
         // Check if mentions are enabled
-        if (!group.settings.mentionsEnabled) {
+        if (!group.mentionsEnabled) {
             return false;
         }
 
         // Check if user is banned
-        if (group.bannedUsers.includes(userId)) {
+        if ((group.bannedUsers ?? []).includes(userId)) {
             return false;
         }
 
         // Check each mention type
         for (const mention of mentions) {
             if (mention === 'all' || mention === 'everyone') {
-                if (!group.allowedMentions.everyone) {
+                if (!group.allowMentionEveryone) {
                     return false;
                 }
             } else if (mention.startsWith('role:')) {
-                if (!group.allowedMentions.roles) {
+                if (!group.allowMentionRoles) {
                     return false;
                 }
             } else {
-                if (!group.allowedMentions.users) {
+                if (!group.allowMentionUsers) {
                     return false;
                 }
             }
@@ -245,4 +263,4 @@ export class GroupService {
 
         return true;
     }
-} 
+}

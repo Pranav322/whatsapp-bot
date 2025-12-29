@@ -1,4 +1,5 @@
-import { Reminder, IReminderModel } from '../models';
+import { db, reminders, Reminder } from '../db';
+import { eq, and, asc } from 'drizzle-orm';
 import { NotificationService } from './NotificationService';
 
 export class ReminderService {
@@ -11,15 +12,15 @@ export class ReminderService {
         time: Date,
         notifyUsers: string[] = [],
         groupId?: string
-    ): Promise<IReminderModel> {
-        const reminder = await Reminder.create({
+    ): Promise<Reminder> {
+        const [reminder] = await db.insert(reminders).values({
             userId,
             task,
             time,
             notifyUsers,
             groupId,
             isCompleted: false
-        });
+        }).returning();
 
         await NotificationService.scheduleReminder(reminder);
         return reminder;
@@ -28,24 +29,32 @@ export class ReminderService {
     /**
      * List active reminders for a user
      */
-    static async list(userId: string, includeCompleted = false): Promise<IReminderModel[]> {
-        const query: { userId: string; isCompleted?: boolean } = { userId };
-        
-        if (!includeCompleted) {
-            query.isCompleted = false;
+    static async list(userId: string, includeCompleted = false): Promise<Reminder[]> {
+        if (includeCompleted) {
+            return await db.select()
+                .from(reminders)
+                .where(eq(reminders.userId, userId))
+                .orderBy(asc(reminders.time));
         }
 
-        return await Reminder.find(query).sort({ time: 1 });
+        return await db.select()
+            .from(reminders)
+            .where(and(eq(reminders.userId, userId), eq(reminders.isCompleted, false)))
+            .orderBy(asc(reminders.time));
     }
 
     /**
      * Delete a reminder
      */
     static async delete(userId: string, reminderId: string): Promise<void> {
-        const reminder = await Reminder.findOne({ _id: reminderId, userId });
-        if (reminder) {
+        const result = await db.select()
+            .from(reminders)
+            .where(and(eq(reminders.id, reminderId), eq(reminders.userId, userId)))
+            .limit(1);
+
+        if (result.length > 0) {
             NotificationService.cancelReminder(reminderId);
-            await Reminder.deleteOne({ _id: reminderId });
+            await db.delete(reminders).where(eq(reminders.id, reminderId));
         }
     }
 
@@ -53,10 +62,9 @@ export class ReminderService {
      * Clear completed reminders
      */
     static async clearCompleted(userId: string): Promise<number> {
-        const result = await Reminder.deleteMany({
-            userId,
-            isCompleted: true
-        });
-        return result.deletedCount || 0;
+        const result = await db.delete(reminders)
+            .where(and(eq(reminders.userId, userId), eq(reminders.isCompleted, true)))
+            .returning();
+        return result.length;
     }
-} 
+}

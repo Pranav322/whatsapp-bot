@@ -1,63 +1,71 @@
-import { Note, INoteModel } from '../models';
+import { db, notes, Note } from '../db';
+import { eq, and, desc, ilike } from 'drizzle-orm';
 
 export class NoteService {
     /**
      * Create a new note
      */
-    static async create(userId: string, content: string): Promise<INoteModel> {
-        return await Note.create({
+    static async create(userId: string, content: string): Promise<Note> {
+        const [newNote] = await db.insert(notes).values({
             userId,
             content
-        });
+        }).returning();
+        return newNote;
     }
 
     /**
      * Get all notes for a user
      */
-    static async list(userId: string): Promise<INoteModel[]> {
-        return await Note.find({ userId }).sort({ updatedAt: -1 });
+    static async list(userId: string): Promise<Note[]> {
+        return await db.select()
+            .from(notes)
+            .where(eq(notes.userId, userId))
+            .orderBy(desc(notes.updatedAt));
     }
 
     /**
      * Get note by ID
      */
-    static async getById(userId: string, noteId: string): Promise<INoteModel | null> {
-        return await Note.findOne({ _id: noteId, userId });
+    static async getById(userId: string, noteId: string): Promise<Note | null> {
+        const result = await db.select()
+            .from(notes)
+            .where(and(eq(notes.id, noteId), eq(notes.userId, userId)))
+            .limit(1);
+        return result[0] || null;
     }
 
     /**
      * Update a note
      */
-    static async update(userId: string, noteId: string, content: string): Promise<INoteModel | null> {
-        return await Note.findOneAndUpdate(
-            { _id: noteId, userId },
-            { $set: { content } },
-            { new: true }
-        );
+    static async update(userId: string, noteId: string, content: string): Promise<Note | null> {
+        const result = await db.update(notes)
+            .set({ content, updatedAt: new Date() })
+            .where(and(eq(notes.id, noteId), eq(notes.userId, userId)))
+            .returning();
+        return result[0] || null;
     }
 
     /**
      * Delete a note
      */
     static async delete(userId: string, noteId: string): Promise<boolean> {
-        const result = await Note.deleteOne({ _id: noteId, userId });
-        return result.deletedCount > 0;
+        const result = await db.delete(notes)
+            .where(and(eq(notes.id, noteId), eq(notes.userId, userId)))
+            .returning();
+        return result.length > 0;
     }
 
     /**
-     * Search notes by content
+     * Search notes by content (simple ILIKE search - PostgreSQL alternative to text search)
      */
-    static async search(userId: string, query: string): Promise<INoteModel[]> {
-        return await Note.find(
-            { 
-                userId,
-                $text: { $search: query }
-            },
-            { 
-                score: { $meta: 'textScore' }
-            }
-        )
-        .sort({ score: { $meta: 'textScore' } })
-        .limit(10);
+    static async search(userId: string, query: string): Promise<Note[]> {
+        return await db.select()
+            .from(notes)
+            .where(and(
+                eq(notes.userId, userId),
+                ilike(notes.content, `%${query}%`)
+            ))
+            .orderBy(desc(notes.updatedAt))
+            .limit(10);
     }
-} 
+}
