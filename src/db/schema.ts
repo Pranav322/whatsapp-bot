@@ -1,4 +1,4 @@
-import { pgTable, text, boolean, timestamp, integer, uuid, jsonb } from 'drizzle-orm/pg-core';
+import { pgTable, text, boolean, timestamp, integer, uuid } from 'drizzle-orm/pg-core';
 
 // Users table
 export const users = pgTable('users', {
@@ -16,7 +16,7 @@ export const groups = pgTable('groups', {
     id: uuid('id').defaultRandom().primaryKey(),
     groupId: text('group_id').notNull().unique(),
     // Settings
-    allowedCommands: text('allowed_commands').array().default(['help', 'notify', 'todo', 'note', 'timer']),
+    allowedCommands: text('allowed_commands').array().default(['help', 'notify', 'todo', 'note', 'timer', 'sticker']),
     notificationsEnabled: boolean('notifications_enabled').default(true),
     mentionsEnabled: boolean('mentions_enabled').default(true),
     onlyAdminsCanChange: boolean('only_admins_can_change').default(true),

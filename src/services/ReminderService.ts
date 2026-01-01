@@ -1,6 +1,6 @@
-import { db, reminders, Reminder } from '../db';
+import { db, reminders, Reminder } from '../db/index.js';
 import { eq, and, asc } from 'drizzle-orm';
-import { NotificationService } from './NotificationService';
+import { NotificationService } from './NotificationService.js';
 
 export class ReminderService {
     /**

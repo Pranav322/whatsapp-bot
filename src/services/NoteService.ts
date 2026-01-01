@@ -1,4 +1,4 @@
-import { db, notes, Note } from '../db';
+import { db, notes, Note } from '../db/index.js';
 import { eq, and, desc, ilike } from 'drizzle-orm';
 
 export class NoteService {

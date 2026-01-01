@@ -1,5 +1,5 @@
-import { CommandHandler, CommandContext } from '../../types/commands';
-import { GroupService } from '../../services';
+import { CommandHandler, CommandContext } from '../../types/commands.js';
+import { GroupService } from '../../services/GroupService.js';
 
 export const GroupHandler: CommandHandler = {
     name: 'group',
@@ -284,4 +284,4 @@ async function handleMentions(context: CommandContext) {
             ? `✅ ${type} mentions ${value ? 'enabled' : 'disabled'}.`
             : '❌ You need to be an admin to change mention settings.'
     });
-} 
+}

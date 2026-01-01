@@ -1,6 +1,6 @@
-import { db, timers, Timer } from '../db';
+import { db, timers, Timer } from '../db/index.js';
 import { eq, and, gt, asc } from 'drizzle-orm';
-import { WASocket } from '@whiskeysockets/baileys';
+import { WASocket } from 'baileys';
 import * as cron from 'node-cron';
 
 export class TimerService {

@@ -1,4 +1,4 @@
-import { db, todos, Todo } from '../db';
+import { db, todos, Todo } from '../db/index.js';
 import { eq, and, desc } from 'drizzle-orm';
 
 export class TodoService {

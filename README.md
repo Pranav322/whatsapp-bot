@@ -1,115 +1,88 @@
-# WhatsApp Bot Assistant
+# WhatsApp Reminder Bot 🤖
 
-A feature-rich WhatsApp bot built with Node.js that helps manage todos, reminders, timers, and group chats. The bot uses the WhatsApp Web API through the `@whiskeysockets/baileys` library.
+A WhatsApp bot built with [Baileys](https://github.com/WhiskeySockets/Baileys) that can send you reminders.
 
 ## Features
 
-### Todo Management
-- Create and manage todo lists
-- Mark items as complete
-- List all pending todos
-- Remove completed todos
+- **Set Reminders**: Use `/new <time> <message>` to set a reminder
+- **Flexible Time Formats**: Supports seconds, minutes, hours, and combinations
+- **Instant Confirmation**: Get confirmation when a reminder is set
+- **Push Notifications**: Receive reminder messages directly on WhatsApp
 
-### Timer System
-- Set countdown timers
-- Get notifications when timers complete
-- Multiple concurrent timers support
-- Cancel active timers
+## Installation
 
-### Notification System
-- Set reminders with custom messages
-- Get notified at specified times
-- Manage multiple reminders
-
-### Group Chat Features
-- Group settings management
-- Admin controls (add/remove admins)
-- User management (ban/unban users)
-- Mention controls
-- Group-wide notifications
-
-## Available Commands
-
-### Todo Commands
-- `!todo add <item>` - Add a new todo item
-- `!todo list` - List all pending todos
-- `!todo done <number>` - Mark a todo as complete
-- `!todo clear` - Remove all completed todos
-
-### Timer Commands
-- `!timer start <duration>` - Start a countdown timer
-- `!timer list` - List all active timers
-- `!timer cancel <id>` - Cancel a specific timer
-
-### Notification Commands
-- `!notify add <time> <message>` - Set a reminder
-- `!notify list` - List all pending reminders
-- `!notify remove <id>` - Remove a specific reminder
-
-### Group Commands
-- `!group settings` - View/modify group settings
-- `!group admin add/remove <@user>` - Manage admins
-- `!group ban/unban <@user>` - Manage banned users
-- `!group mentions` - Configure mention settings
-
-### Help Command
-- `!help` - Display available commands and usage
-
-## Technical Details
-
-### Built With
-- Node.js
-- TypeScript
-- MongoDB (for data persistence)
-- @whiskeysockets/baileys (WhatsApp Web API)
-- Mongoose (MongoDB ODM)
-
-### Prerequisites
-- Node.js 14+
-- MongoDB database
-- WhatsApp account for the bot
-
-### Environment Variables
-```env
-MONGODB_URI=your_mongodb_connection_string
-```
-
-### Installation
-
-1. Clone the repository
 ```bash
-git clone <repository-url>
-```
-
-2. Install dependencies
-```bash
+# Install dependencies
 npm install
-```
 
-3. Build the project
-```bash
+# Build the project
 npm run build
-```
 
-4. Start the bot
-```bash
+# Start the bot
 npm start
 ```
 
-5. Scan the QR code with WhatsApp to authenticate
+## Development
 
-### Deployment
-
-The bot can be deployed to Heroku:
-
-1. Create a new Heroku app
-2. Set the MongoDB URI in config vars
-3. Deploy using Git
-4. Scale the worker dyno:
 ```bash
-heroku ps:scale worker=1 web=0
+# Run in development mode with auto-reload
+npm run dev
 ```
+
+## Usage
+
+Send a message to your WhatsApp (the one connected to the bot) with the following format:
+
+```
+/new <time> <message>
+```
+
+### Time Formats
+
+| Format | Description |
+|--------|-------------|
+| `5s` | 5 seconds |
+| `5m` | 5 minutes |
+| `1h` | 1 hour |
+| `1h30m` | 1 hour 30 minutes |
+| `2h15m30s` | 2 hours 15 minutes 30 seconds |
+
+### Examples
+
+```
+/new 5m Take a break
+/new 1h30m Team meeting
+/new 2h Check emails
+```
+
+## First Time Setup
+
+1. Run the bot using `npm start` or `npm run dev`
+2. A QR code will appear in the terminal
+3. Open WhatsApp on your phone
+4. Go to **Settings** > **Linked Devices** > **Link a Device**
+5. Scan the QR code
+6. You're connected! The bot will now listen for messages
+
+## Project Structure
+
+```
+src/
+├── index.ts                 # Main entry point
+├── handlers/
+│   └── messageHandler.ts    # Handles incoming messages
+├── services/
+│   └── reminderService.ts   # Manages reminders
+└── utils/
+    └── timeParser.ts        # Parses time strings
+```
+
+## Notes
+
+- The `auth_info/` folder contains your WhatsApp credentials. Keep it secure!
+- The bot uses in-memory storage for reminders. They will be lost if the bot restarts.
+- Maximum reminder duration is 24 hours.
 
 ## License
 
-no license
+MIT

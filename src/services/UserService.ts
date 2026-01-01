@@ -1,4 +1,4 @@
-import { db, users, User } from '../db';
+import { db, users, User } from '../db/index.js';
 import { eq } from 'drizzle-orm';
 
 export interface UserSettings {

@@ -1,6 +1,6 @@
-import { db, groups, Group } from '../db';
+import { db, groups, Group } from '../db/index.js';
 import { eq, sql } from 'drizzle-orm';
-import { WASocket } from '@whiskeysockets/baileys';
+import { WASocket } from 'baileys';
 
 export interface GroupSettings {
     allowedCommands: string[];
@@ -37,7 +37,7 @@ export class GroupService {
 
         const [newGroup] = await db.insert(groups).values({
             groupId,
-            allowedCommands: ['help', 'notify', 'todo', 'note', 'timer'],
+            allowedCommands: ['help', 'notify', 'todo', 'note', 'timer', 'sticker'],
             notificationsEnabled: true,
             mentionsEnabled: true,
             onlyAdminsCanChange: true,

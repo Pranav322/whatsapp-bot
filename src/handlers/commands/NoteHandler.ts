@@ -1,5 +1,5 @@
-import { CommandHandler, CommandContext } from '../../types/commands';
-import { NoteService } from '../../services';
+import { CommandHandler, CommandContext } from '../../types/commands.js';
+import { NoteService } from '../../services/NoteService.js';
 
 export const NoteHandler: CommandHandler = {
     name: 'note',
@@ -42,21 +42,21 @@ export const NoteHandler: CommandHandler = {
                     }
 
                     const noteList = notes.map((note, index) => {
-                        const preview = note.content.length > 50 
-                            ? note.content.substring(0, 47) + '...' 
+                        const preview = note.content.length > 50
+                            ? note.content.substring(0, 47) + '...'
                             : note.content;
                         return `${index + 1}. ${preview}`;
                     }).join('\n');
 
-                    await socket.sendMessage(chat, { 
-                        text: '📚 Your Notes:\n' + noteList 
+                    await socket.sendMessage(chat, {
+                        text: '📚 Your Notes:\n' + noteList
                     });
                     break;
 
                 case 'view':
                     if (args.length !== 2 || isNaN(parseInt(args[1]))) {
-                        await socket.sendMessage(chat, { 
-                            text: 'Please specify the note number to view.' 
+                        await socket.sendMessage(chat, {
+                            text: 'Please specify the note number to view.'
                         });
                         return;
                     }
@@ -69,15 +69,15 @@ export const NoteHandler: CommandHandler = {
                         return;
                     }
 
-                    await socket.sendMessage(chat, { 
-                        text: `📖 Note #${args[1]}:\n${viewNotes[viewIndex].content}` 
+                    await socket.sendMessage(chat, {
+                        text: `📖 Note #${args[1]}:\n${viewNotes[viewIndex].content}`
                     });
                     break;
 
                 case 'delete':
                     if (args.length !== 2 || isNaN(parseInt(args[1]))) {
-                        await socket.sendMessage(chat, { 
-                            text: 'Please specify the note number to delete.' 
+                        await socket.sendMessage(chat, {
+                            text: 'Please specify the note number to delete.'
                         });
                         return;
                     }
@@ -96,8 +96,8 @@ export const NoteHandler: CommandHandler = {
 
                 case 'search':
                     if (args.length < 2) {
-                        await socket.sendMessage(chat, { 
-                            text: 'Please specify a search query.' 
+                        await socket.sendMessage(chat, {
+                            text: 'Please specify a search query.'
                         });
                         return;
                     }
@@ -106,34 +106,34 @@ export const NoteHandler: CommandHandler = {
                     const searchResults = await NoteService.search(sender, query);
 
                     if (searchResults.length === 0) {
-                        await socket.sendMessage(chat, { 
-                            text: 'No notes found matching your search.' 
+                        await socket.sendMessage(chat, {
+                            text: 'No notes found matching your search.'
                         });
                         return;
                     }
 
                     const resultList = searchResults.map((note, index) => {
-                        const preview = note.content.length > 50 
-                            ? note.content.substring(0, 47) + '...' 
+                        const preview = note.content.length > 50
+                            ? note.content.substring(0, 47) + '...'
                             : note.content;
                         return `${index + 1}. ${preview}`;
                     }).join('\n');
 
-                    await socket.sendMessage(chat, { 
-                        text: `🔍 Search Results for "${query}":\n${resultList}` 
+                    await socket.sendMessage(chat, {
+                        text: `🔍 Search Results for "${query}":\n${resultList}`
                     });
                     break;
 
                 default:
-                    await socket.sendMessage(chat, { 
-                        text: 'Unknown subcommand. Use: save, list, view, delete, or search.' 
+                    await socket.sendMessage(chat, {
+                        text: 'Unknown subcommand. Use: save, list, view, delete, or search.'
                     });
             }
         } catch (error) {
             console.error('Error in note command:', error);
-            await socket.sendMessage(chat, { 
-                text: '❌ Failed to process note command. Please try again.' 
+            await socket.sendMessage(chat, {
+                text: '❌ Failed to process note command. Please try again.'
             });
         }
     }
-}; 
+};

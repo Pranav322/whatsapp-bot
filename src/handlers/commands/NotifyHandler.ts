@@ -1,5 +1,5 @@
-import { CommandHandler, CommandContext } from '../../types/commands';
-import { ReminderService } from '../../services';
+import { CommandHandler, CommandContext } from '../../types/commands.js';
+import { ReminderService } from '../../services/ReminderService.js';
 import moment from 'moment';
 
 export const NotifyHandler: CommandHandler = {
@@ -15,8 +15,8 @@ export const NotifyHandler: CommandHandler = {
         const { socket, chat, sender, args, isGroup } = context;
 
         if (args.length < 2) {
-            await socket.sendMessage(chat, { 
-                text: 'Usage: !notify <task> <time> or !notify @me/@all <task> <time>' 
+            await socket.sendMessage(chat, {
+                text: 'Usage: !notify <task> <time> or !notify @me/@all <task> <time>'
             });
             return;
         }
@@ -47,8 +47,8 @@ export const NotifyHandler: CommandHandler = {
             // Parse time string (e.g., '30m', '1h', '2h30m')
             const duration = parseTimeString(timeStr);
             if (!duration) {
-                await socket.sendMessage(chat, { 
-                    text: 'Invalid time format. Examples: 30m, 1h, 2h30m' 
+                await socket.sendMessage(chat, {
+                    text: 'Invalid time format. Examples: 30m, 1h, 2h30m'
                 });
                 return;
             }
@@ -73,8 +73,8 @@ export const NotifyHandler: CommandHandler = {
 
         } catch (error) {
             console.error('Error in notify command:', error);
-            await socket.sendMessage(chat, { 
-                text: '❌ Failed to set reminder. Please try again.' 
+            await socket.sendMessage(chat, {
+                text: '❌ Failed to set reminder. Please try again.'
             });
         }
     }
@@ -99,7 +99,7 @@ function parseTimeString(timeStr: string): number | null {
 function formatDuration(minutes: number): string {
     const hours = Math.floor(minutes / 60);
     const mins = minutes % 60;
-    
+
     if (hours > 0 && mins > 0) {
         return `${hours}h ${mins}m`;
     } else if (hours > 0) {

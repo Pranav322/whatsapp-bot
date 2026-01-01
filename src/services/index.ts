@@ -1,7 +1,7 @@
-export { UserService } from './UserService';
-export { GroupService } from './GroupService';
-export { TodoService } from './TodoService';
-export { NoteService } from './NoteService';
-export { TimerService } from './TimerService';
-export { ReminderService } from './ReminderService';
-export { NotificationService } from './NotificationService';
+export * from './GroupService.js';
+export * from './NoteService.js';
+export * from './NotificationService.js';
+export * from './ReminderService.js';
+export * from './TimerService.js';
+export * from './TodoService.js';
+export * from './UserService.js';

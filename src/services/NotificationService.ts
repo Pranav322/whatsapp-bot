@@ -1,5 +1,5 @@
-import { WASocket } from '@whiskeysockets/baileys';
-import { db, reminders, timers, Reminder, Timer } from '../db';
+import { WASocket } from 'baileys';
+import { db, reminders, timers, Reminder, Timer } from '../db/index.js';
 import { eq, and, gt } from 'drizzle-orm';
 import * as cron from 'node-cron';
 

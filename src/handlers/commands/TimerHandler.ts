@@ -1,5 +1,5 @@
-import { CommandHandler, CommandContext } from '../../types/commands';
-import { TimerService } from '../../services';
+import { CommandHandler, CommandContext } from '../../types/commands.js';
+import { TimerService } from '../../services/TimerService.js';
 
 function parseTimeString(timeStr: string): number | null {
     // If it's just a number, treat as minutes
@@ -48,30 +48,30 @@ export const TimerHandler: CommandHandler = {
             switch (subCommand) {
                 case 'start':
                     if (args.length < 2) {
-                        await socket.sendMessage(chat, { 
-                            text: 'Please specify a duration (e.g., 30m, 1h, or just 30 for minutes).' 
+                        await socket.sendMessage(chat, {
+                            text: 'Please specify a duration (e.g., 30m, 1h, or just 30 for minutes).'
                         });
                         return;
                     }
 
                     const duration = parseTimeString(args[1]);
                     if (!duration) {
-                        await socket.sendMessage(chat, { 
-                            text: 'Invalid duration format. Examples: 30m, 1h, or just 30 for minutes.' 
+                        await socket.sendMessage(chat, {
+                            text: 'Invalid duration format. Examples: 30m, 1h, or just 30 for minutes.'
                         });
                         return;
                     }
 
                     if (duration > 1440) { // 24 hours
-                        await socket.sendMessage(chat, { 
-                            text: 'Timer duration cannot exceed 24 hours.' 
+                        await socket.sendMessage(chat, {
+                            text: 'Timer duration cannot exceed 24 hours.'
                         });
                         return;
                     }
 
                     await TimerService.create(sender, duration);
-                    await socket.sendMessage(chat, { 
-                        text: `⏰ Timer set for ${duration} minutes!` 
+                    await socket.sendMessage(chat, {
+                        text: `⏰ Timer set for ${duration} minutes!`
                     });
                     break;
 
@@ -83,21 +83,21 @@ export const TimerHandler: CommandHandler = {
                     }
 
                     const timerList = timers.map((timer, index) => {
-                        const remainingTime = Math.max(0, 
+                        const remainingTime = Math.max(0,
                             Math.floor((timer.endTime.getTime() - Date.now()) / 60000)
                         );
                         return `${index + 1}. ⏳ ${remainingTime} minutes remaining`;
                     }).join('\n');
 
-                    await socket.sendMessage(chat, { 
-                        text: '⏰ Active Timers:\n' + timerList 
+                    await socket.sendMessage(chat, {
+                        text: '⏰ Active Timers:\n' + timerList
                     });
                     break;
 
                 case 'cancel':
                     if (args.length !== 2 || isNaN(parseInt(args[1]))) {
-                        await socket.sendMessage(chat, { 
-                            text: 'Please specify the timer number to cancel.' 
+                        await socket.sendMessage(chat, {
+                            text: 'Please specify the timer number to cancel.'
                         });
                         return;
                     }
@@ -115,15 +115,15 @@ export const TimerHandler: CommandHandler = {
                     break;
 
                 default:
-                    await socket.sendMessage(chat, { 
-                        text: 'Unknown command. Use: start, list, or cancel.' 
+                    await socket.sendMessage(chat, {
+                        text: 'Unknown command. Use: start, list, or cancel.'
                     });
             }
         } catch (error) {
             console.error('Error in timer command:', error);
-            await socket.sendMessage(chat, { 
-                text: '❌ Failed to process timer command. Please try again.' 
+            await socket.sendMessage(chat, {
+                text: '❌ Failed to process timer command. Please try again.'
             });
         }
     }
-}; 
+};

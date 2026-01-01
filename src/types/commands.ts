@@ -1,4 +1,4 @@
-import { WASocket, proto } from '@whiskeysockets/baileys';
+import { WASocket, proto } from 'baileys';
 
 export interface CommandContext {
     socket: WASocket;

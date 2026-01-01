@@ -1,67 +1,80 @@
-import { WASocket, proto } from '@whiskeysockets/baileys';
-import { commandHandlers } from './commands';
-import { CommandContext } from '../types/commands';
-import { UserService, GroupService } from '../services';
+import { WASocket, proto } from 'baileys';
+import { commandHandlers } from './commands/index.js';
+import { GroupService, UserService } from '../services/index.js';
 
-export async function handleMessage(sock: WASocket, message: proto.IWebMessageInfo) {
-    const chat = message.key.remoteJid;
-    try {
-        const messageText = message.message?.conversation || 
-                          message.message?.extendedTextMessage?.text || '';
-        const sender = message.key.participant || message.key.remoteJid || '';
+export async function handleMessage(
+    sock: WASocket,
+    message: proto.IWebMessageInfo
+): Promise<void> {
+    // Check for required message key
+    if (!message.key) return;
 
-        // Ignore if not a text message or no chat
-        if (!chat || !messageText) return;
+    const remoteJid = message.key.remoteJid;
+    if (!remoteJid) return;
 
-        // Check if it's a command (starts with !)
-        if (!messageText.startsWith('!')) return;
+    // Extract text from different message types
+    const textContent =
+        message.message?.conversation ||
+        message.message?.extendedTextMessage?.text ||
+        message.message?.imageMessage?.caption ||
+        message.message?.videoMessage?.caption ||
+        "";
 
-        // Parse command and arguments
-        const [commandName, ...args] = messageText.slice(1).split(' ');
-        const isGroup = chat.endsWith('@g.us');
+    if (!textContent) return;
 
-        // Get command handler
+    const text = textContent.trim();
+
+    // Debug logging
+    // console.log(`📨 Message received:`, {
+    //     from: remoteJid,
+    //     fromMe: message.key.fromMe,
+    //     text: text.substring(0, 50) + (text.length > 50 ? '...' : ''),
+    // });
+
+    // Handle commands
+    if (text.startsWith('!')) {
+        const [commandName, ...args] = text.slice(1).split(' ');
         const handler = commandHandlers.get(commandName.toLowerCase());
-        if (!handler) {
-            await sock.sendMessage(chat, { 
-                text: 'Unknown command. Type !help for available commands.' 
-            });
-            return;
-        }
 
-        // Create command context
-        const context: CommandContext = {
-            socket: sock,
-            message,
-            chat,
-            sender,
-            args,
-            isGroup
-        };
+        if (handler) {
+            const isGroup = remoteJid.endsWith('@g.us');
+            const sender = message.key.fromMe
+                ? sock.user?.id?.split(':')[0] + '@s.whatsapp.net'
+                : (isGroup ? message.key.participant : remoteJid);
 
-        // Check group permissions if it's a group chat
-        if (isGroup) {
-            const isAllowed = await GroupService.isCommandAllowed(chat, commandName);
-            if (!isAllowed) {
-                await sock.sendMessage(chat, { 
-                    text: '❌ This command is not allowed in this group.' 
+            // Create user if not exists
+            if (sender) {
+                await UserService.updateLastActive(sender);
+            }
+
+            // Check group permissions if it's a group
+            if (isGroup) {
+                const isAllowed = await GroupService.isCommandAllowed(remoteJid, commandName);
+                if (!isAllowed) {
+                    // Optionally notify that command is disabled
+                    return;
+                }
+
+                // Check if user is banned
+                if (sender) {
+                    const isBanned = await GroupService.isUserBanned(remoteJid, sender);
+                    if (isBanned) {
+                        return;
+                    }
+                }
+            }
+
+            // Execute command
+            if (sender) {
+                await handler.execute({
+                    socket: sock,
+                    message,
+                    chat: remoteJid,
+                    sender,
+                    args,
+                    isGroup
                 });
-                return;
             }
         }
-
-        // Update user's last active timestamp
-        await UserService.updateLastActive(sender);
-
-        // Execute command
-        await handler.execute(context);
-
-    } catch (error) {
-        console.error('Error handling message:', error);
-        if (chat) {
-            await sock.sendMessage(chat, { 
-                text: '❌ An error occurred while processing your command.' 
-            });
-        }
     }
-} 
+}

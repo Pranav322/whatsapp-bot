@@ -1,5 +1,6 @@
-import { CommandHandler, CommandContext } from '../../types/commands';
-import { TodoService } from '../../services';
+import { CommandHandler, CommandContext } from '../../types/commands.js';
+import { TodoService } from '../../services/TodoService.js';
+import { Todo } from '../../db/index.js';
 
 export const TodoHandler: CommandHandler = {
     name: 'todo',
@@ -34,7 +35,7 @@ export const TodoHandler: CommandHandler = {
                     const taskInput = args.slice(1).join(' ');
                     // Split by commas and trim whitespace
                     const tasks = taskInput.split(',').map(task => task.trim()).filter(task => task.length > 0);
-                    
+
                     if (tasks.length === 0) {
                         await socket.sendMessage(chat, { text: 'Please specify valid tasks to add.' });
                         return;
@@ -46,7 +47,7 @@ export const TodoHandler: CommandHandler = {
                     );
 
                     // Format response message
-                    const responseMsg = tasks.length === 1 
+                    const responseMsg = tasks.length === 1
                         ? '✅ Todo added: ' + tasks[0]
                         : '✅ Added multiple todos:\n' + tasks.map((task, i) => `${i + 1}. ${task}`).join('\n');
 
@@ -60,12 +61,12 @@ export const TodoHandler: CommandHandler = {
                         return;
                     }
 
-                    const todoList = todos.map((todo, index) => 
+                    const todoList = todos.map((todo, index) =>
                         `${index + 1}. ${todo.completed ? '✓' : '○'} ${todo.task}`
                     ).join('\n');
 
-                    await socket.sendMessage(chat, { 
-                        text: '📝 Todo List for this chat:\n' + todoList 
+                    await socket.sendMessage(chat, {
+                        text: '📝 Todo List for this chat:\n' + todoList
                     });
                     break;
 
@@ -83,13 +84,13 @@ export const TodoHandler: CommandHandler = {
                         }
                         acc[todo.chatId].push(todo);
                         return acc;
-                    }, {} as Record<string, typeof allTodos>);
+                    }, {} as Record<string, Todo[]>);
 
                     let allTodosList = '📝 All Your Todos:\n\n';
                     for (const [chatId, chatTodos] of Object.entries(todosByChat)) {
                         const chatName = chatId.includes('@g.us') ? 'Group Chat' : 'Personal Chat';
                         allTodosList += `${chatName}:\n`;
-                        allTodosList += chatTodos.map((todo, index) => 
+                        allTodosList += (chatTodos as Todo[]).map((todo: Todo, index: number) =>
                             `${index + 1}. ${todo.completed ? '✓' : '○'} ${todo.task}`
                         ).join('\n');
                         allTodosList += '\n\n';
@@ -100,8 +101,8 @@ export const TodoHandler: CommandHandler = {
 
                 case 'done':
                     if (args.length !== 2 || isNaN(parseInt(args[1]))) {
-                        await socket.sendMessage(chat, { 
-                            text: 'Please specify the todo number to mark as done.' 
+                        await socket.sendMessage(chat, {
+                            text: 'Please specify the todo number to mark as done.'
                         });
                         return;
                     }
@@ -115,15 +116,15 @@ export const TodoHandler: CommandHandler = {
                     }
 
                     await TodoService.complete(chat, todos2[todoIndex].id);
-                    await socket.sendMessage(chat, { 
-                        text: '✅ Marked as done: ' + todos2[todoIndex].task 
+                    await socket.sendMessage(chat, {
+                        text: '✅ Marked as done: ' + todos2[todoIndex].task
                     });
                     break;
 
                 case 'delete':
                     if (args.length !== 2 || isNaN(parseInt(args[1]))) {
-                        await socket.sendMessage(chat, { 
-                            text: 'Please specify the todo number to delete.' 
+                        await socket.sendMessage(chat, {
+                            text: 'Please specify the todo number to delete.'
                         });
                         return;
                     }
@@ -137,28 +138,28 @@ export const TodoHandler: CommandHandler = {
                     }
 
                     await TodoService.delete(chat, todos3[deleteIndex].id);
-                    await socket.sendMessage(chat, { 
-                        text: '🗑️ Deleted: ' + todos3[deleteIndex].task 
+                    await socket.sendMessage(chat, {
+                        text: '🗑️ Deleted: ' + todos3[deleteIndex].task
                     });
                     break;
 
                 case 'clear':
                     const count = await TodoService.clearCompleted(chat);
-                    await socket.sendMessage(chat, { 
-                        text: `🧹 Cleared ${count} completed todos from this chat.` 
+                    await socket.sendMessage(chat, {
+                        text: `🧹 Cleared ${count} completed todos from this chat.`
                     });
                     break;
 
                 default:
-                    await socket.sendMessage(chat, { 
-                        text: 'Unknown subcommand. Use: add, list, list-all, done, delete, or clear.' 
+                    await socket.sendMessage(chat, {
+                        text: 'Unknown subcommand. Use: add, list, list-all, done, delete, or clear.'
                     });
             }
         } catch (error) {
             console.error('Error in todo command:', error);
-            await socket.sendMessage(chat, { 
-                text: '❌ Failed to process todo command. Please try again.' 
+            await socket.sendMessage(chat, {
+                text: '❌ Failed to process todo command. Please try again.'
             });
         }
     }
-}; 
+};
