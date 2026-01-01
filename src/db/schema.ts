@@ -16,7 +16,7 @@ export const groups = pgTable('groups', {
     id: uuid('id').defaultRandom().primaryKey(),
     groupId: text('group_id').notNull().unique(),
     // Settings
-    allowedCommands: text('allowed_commands').array().default(['help', 'notify', 'todo', 'note', 'timer', 'sticker']),
+    allowedCommands: text('allowed_commands').array().default(['help', 'notify', 'todo', 'note', 'timer', 'sticker', 'spotify', 'play', 'pause', 'next', 'previous']),
     notificationsEnabled: boolean('notifications_enabled').default(true),
     mentionsEnabled: boolean('mentions_enabled').default(true),
     onlyAdminsCanChange: boolean('only_admins_can_change').default(true),
@@ -88,3 +88,16 @@ export type Note = typeof notes.$inferSelect;
 export type NewNote = typeof notes.$inferInsert;
 export type Timer = typeof timers.$inferSelect;
 export type NewTimer = typeof timers.$inferInsert;
+
+// Spotify Tokens table
+export const spotifyTokens = pgTable('spotify_tokens', {
+    id: uuid('id').defaultRandom().primaryKey(),
+    userId: text('user_id').notNull().unique(), // WhatsApp ID
+    accessToken: text('access_token').notNull(),
+    refreshToken: text('refresh_token').notNull(),
+    expiresAt: timestamp('expires_at').notNull(),
+    updatedAt: timestamp('updated_at').defaultNow(),
+});
+
+export type SpotifyToken = typeof spotifyTokens.$inferSelect;
+export type NewSpotifyToken = typeof spotifyTokens.$inferInsert;

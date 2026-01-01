@@ -23,17 +23,21 @@
     "baileys": "^7.0.0-rc.9",
     "dotenv": "^17.2.3",
     "drizzle-orm": "^0.45.1",
+    "express": "^5.2.1",
     "moment": "^2.30.1",
     "node-cron": "^4.2.1",
     "pino": "^9.6.0",
     "postgres": "^3.4.7",
     "qrcode-terminal": "^0.12.0",
-    "sharp": "^0.34.5"
+    "sharp": "^0.34.5",
+    "spotify-web-api-node": "^5.0.2"
   },
   "devDependencies": {
+    "@types/express": "^5.0.6",
     "@types/node": "^22.10.3",
     "@types/node-cron": "^3.0.11",
     "@types/pg": "^8.16.0",
+    "@types/spotify-web-api-node": "^5.0.11",
     "drizzle-kit": "^0.31.8",
     "tsx": "^4.19.2",
     "typescript": "^5.7.2"

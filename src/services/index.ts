@@ -5,3 +5,4 @@ export * from './ReminderService.js';
 export * from './TimerService.js';
 export * from './TodoService.js';
 export * from './UserService.js';
+export * from './SpotifyService.js';
