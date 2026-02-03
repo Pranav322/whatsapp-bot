@@ -17,7 +17,7 @@ import { NotificationService, TimerService } from './services/index.js';
 import { connectDatabase } from './db/index.js';
 
 // Configure logger - set to 'debug' for verbose output
-const logger = pino({ level: 'silent' });
+const logger = pino({ level: 'info' });
 
 let sock: WASocket;
 
