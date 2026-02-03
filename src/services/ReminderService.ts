@@ -10,15 +10,13 @@ export class ReminderService {
         userId: string,
         task: string,
         time: Date,
-        notifyUsers: string[] = [],
-        groupId?: string
+        notifyUsers: string[] = []
     ): Promise<Reminder> {
         const [reminder] = await db.insert(reminders).values({
             userId,
             task,
             time,
             notifyUsers,
-            groupId,
             isCompleted: false
         }).returning();
 

@@ -6,7 +6,6 @@ export interface CommandContext {
     chat: string;
     sender: string;
     args: string[];
-    isGroup: boolean;
 }
 
 export interface CommandHandler {
@@ -20,6 +19,4 @@ export interface CommandHandler {
 export interface ParsedCommand {
     command: string;
     args: string[];
-    mentions: string[];
-    isGroupCommand: boolean;
 } 

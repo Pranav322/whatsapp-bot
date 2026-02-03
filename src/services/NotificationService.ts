@@ -145,15 +145,10 @@ export class NotificationService {
         const message = `🔔 Reminder: ${reminder.task}`;
 
         try {
-            if (reminder.groupId) {
-                // Send to group
-                await NotificationService.waSocket.sendMessage(reminder.groupId, { text: message });
-            } else {
-                // Send to individual users
-                const recipients = [reminder.userId, ...(reminder.notifyUsers ?? [])];
-                for (const recipient of recipients) {
-                    await NotificationService.waSocket.sendMessage(recipient, { text: message });
-                }
+            // Send to individual users
+            const recipients = [reminder.userId, ...(reminder.notifyUsers ?? [])];
+            for (const recipient of recipients) {
+                await NotificationService.waSocket.sendMessage(recipient, { text: message });
             }
 
             // Mark reminder as completed

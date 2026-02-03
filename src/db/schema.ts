@@ -11,26 +11,6 @@ export const users = pgTable('users', {
     updatedAt: timestamp('updated_at').defaultNow(),
 });
 
-// Groups table
-export const groups = pgTable('groups', {
-    id: uuid('id').defaultRandom().primaryKey(),
-    groupId: text('group_id').notNull().unique(),
-    // Settings
-    allowedCommands: text('allowed_commands').array().default(['help', 'notify', 'todo', 'note', 'timer', 'sticker', 'spotify', 'play', 'pause', 'next', 'previous']),
-    notificationsEnabled: boolean('notifications_enabled').default(true),
-    mentionsEnabled: boolean('mentions_enabled').default(true),
-    onlyAdminsCanChange: boolean('only_admins_can_change').default(true),
-    // Allowed mentions
-    allowMentionEveryone: boolean('allow_mention_everyone').default(false),
-    allowMentionRoles: boolean('allow_mention_roles').default(true),
-    allowMentionUsers: boolean('allow_mention_users').default(true),
-    // User lists
-    adminUsers: text('admin_users').array().default([]),
-    bannedUsers: text('banned_users').array().default([]),
-    createdAt: timestamp('created_at').defaultNow(),
-    updatedAt: timestamp('updated_at').defaultNow(),
-});
-
 // Todos table
 export const todos = pgTable('todos', {
     id: uuid('id').defaultRandom().primaryKey(),
@@ -50,7 +30,6 @@ export const reminders = pgTable('reminders', {
     task: text('task').notNull(),
     time: timestamp('time').notNull(),
     notifyUsers: text('notify_users').array().default([]),
-    groupId: text('group_id'),
     isCompleted: boolean('is_completed').default(false),
     createdAt: timestamp('created_at').defaultNow(),
 });
@@ -78,8 +57,6 @@ export const timers = pgTable('timers', {
 // Type exports for use in services
 export type User = typeof users.$inferSelect;
 export type NewUser = typeof users.$inferInsert;
-export type Group = typeof groups.$inferSelect;
-export type NewGroup = typeof groups.$inferInsert;
 export type Todo = typeof todos.$inferSelect;
 export type NewTodo = typeof todos.$inferInsert;
 export type Reminder = typeof reminders.$inferSelect;
@@ -88,16 +65,3 @@ export type Note = typeof notes.$inferSelect;
 export type NewNote = typeof notes.$inferInsert;
 export type Timer = typeof timers.$inferSelect;
 export type NewTimer = typeof timers.$inferInsert;
-
-// Spotify Tokens table
-export const spotifyTokens = pgTable('spotify_tokens', {
-    id: uuid('id').defaultRandom().primaryKey(),
-    userId: text('user_id').notNull().unique(), // WhatsApp ID
-    accessToken: text('access_token').notNull(),
-    refreshToken: text('refresh_token').notNull(),
-    expiresAt: timestamp('expires_at').notNull(),
-    updatedAt: timestamp('updated_at').defaultNow(),
-});
-
-export type SpotifyToken = typeof spotifyTokens.$inferSelect;
-export type NewSpotifyToken = typeof spotifyTokens.$inferInsert;

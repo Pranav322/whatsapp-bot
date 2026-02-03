@@ -4,45 +4,25 @@ import moment from 'moment';
 
 export const NotifyHandler: CommandHandler = {
     name: 'notify',
-    description: 'Set a reminder for yourself or the group',
-    usage: '!notify <task> <time> | !notify @me <task> <time> | !notify @all <task> <time>',
+    description: 'Set a reminder for yourself',
+    usage: '!notify <task> <time>',
     examples: [
         '!notify call mom 30m',
-        '!notify @me drink water 1h',
-        '!notify @all team meeting 2h'
+        '!notify buy groceries 1h'
     ],
     execute: async (context: CommandContext) => {
-        const { socket, chat, sender, args, isGroup } = context;
+        const { socket, chat, sender, args } = context;
 
         if (args.length < 2) {
             await socket.sendMessage(chat, {
-                text: 'Usage: !notify <task> <time> or !notify @me/@all <task> <time>'
+                text: 'Usage: !notify <task> <time>'
             });
             return;
         }
 
         try {
-            let task: string;
-            let timeStr: string;
-            let notifyUsers: string[] = [];
-            let targetChat = chat;
-
-            // Parse command based on whether it's a group command
-            if (isGroup && (args[0] === '@me' || args[0] === '@all')) {
-                const target = args[0];
-                task = args.slice(1, -1).join(' ');
-                timeStr = args[args.length - 1];
-
-                if (target === '@me') {
-                    targetChat = sender;
-                } else if (target === '@all') {
-                    notifyUsers = ['@all']; // Special case for group-wide notification
-                }
-            } else {
-                task = args.slice(0, -1).join(' ');
-                timeStr = args[args.length - 1];
-                targetChat = sender;
-            }
+            const task = args.slice(0, -1).join(' ');
+            const timeStr = args[args.length - 1];
 
             // Parse time string (e.g., '30m', '1h', '2h30m')
             const duration = parseTimeString(timeStr);
@@ -59,15 +39,11 @@ export const NotifyHandler: CommandHandler = {
             await ReminderService.create(
                 sender,
                 task,
-                reminderTime,
-                notifyUsers,
-                isGroup ? chat : undefined
+                reminderTime
             );
 
             // Send confirmation
-            const confirmMessage = isGroup && args[0] === '@all'
-                ? `✅ Group reminder set: "${task}" in ${formatDuration(duration)}`
-                : `✅ Reminder set: "${task}" in ${formatDuration(duration)}`;
+            const confirmMessage = `✅ Reminder set: "${task}" in ${formatDuration(duration)}`;
 
             await socket.sendMessage(chat, { text: confirmMessage });
 

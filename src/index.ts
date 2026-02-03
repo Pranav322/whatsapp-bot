@@ -13,7 +13,7 @@ import pino from 'pino';
 import qrcode from 'qrcode-terminal';
 import express from 'express';
 import { handleMessage } from './handlers/messageHandler.js';
-import { NotificationService, TimerService, GroupService, SpotifyService } from './services/index.js';
+import { NotificationService, TimerService } from './services/index.js';
 import { connectDatabase } from './db/index.js';
 
 // Configure logger - set to 'debug' for verbose output
@@ -36,45 +36,6 @@ async function getMessage(key: WAMessageKey): Promise<WAMessageContent | undefin
 // Express Server Setup
 const app = express();
 const port = process.env.PORT || 3000;
-
-app.get('/spotify/callback', async (req: any, res: any) => {
-    const code = req.query.code as string;
-    const error = req.query.error;
-    const state = req.query.state as string; // userId
-
-    if (error) {
-        console.error('Callback Error:', error);
-        res.status(400).send(`Authentication failed: ${error}`);
-        return;
-    }
-
-    if (!code || !state) {
-        res.status(400).send('Missing code or state');
-        return;
-    }
-
-    try {
-        await SpotifyService.handleCode(state, code);
-
-        res.send(`
-            <html>
-                <body style="font-family: sans-serif; text-align: center; padding-top: 50px;">
-                    <h1 style="color: #1DB954;">Spotify Login Successful!</h1>
-                    <p>You can now close this window and return to WhatsApp.</p>
-                </body>
-            </html>
-        `);
-
-        // Notify user on WhatsApp
-        if (sock) {
-            await sock.sendMessage(state, { text: '✅ Successfully logged in to Spotify! You can now use !play, !next, etc.' });
-        }
-
-    } catch (err) {
-        console.error('Error in callback:', err);
-        res.status(500).send('Internal Server Error during authentication');
-    }
-});
 
 async function connectToWhatsApp(): Promise<void> {
     // Load auth state from file system
@@ -128,7 +89,6 @@ async function connectToWhatsApp(): Promise<void> {
                 // Initialize services
                 NotificationService.initialize(sock);
                 TimerService.initialize(sock);
-                GroupService.initialize(sock);
 
                 console.log('\n✅ Connected to WhatsApp successfully!');
                 console.log('📝 Bot is now listening for messages...\n');
@@ -172,12 +132,11 @@ console.log('🤖 WhatsApp Reminder Bot Starting...\n');
 
 // Start Express Server
 app.listen(port, () => {
-    console.log(`🌍 Callback server listening on port ${port}`);
+    console.log(`🌍 Server listening on port ${port}`);
 });
 
 connectDatabase()
     .then(() => {
-        SpotifyService.initialize();
         return connectToWhatsApp();
     })
     .catch(console.error);

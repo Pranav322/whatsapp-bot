@@ -5,12 +5,11 @@ import { Todo } from '../../db/index.js';
 export const TodoHandler: CommandHandler = {
     name: 'todo',
     description: 'Manage your todo list',
-    usage: '!todo <add/list/list-all/done/delete/clear> [task/number]',
+    usage: '!todo <add/list/done/delete/clear> [task/number]',
     examples: [
         '!todo add Buy groceries',
         '!todo add task1, task2, task3',
         '!todo list',
-        '!todo list-all',
         '!todo done 1',
         '!todo delete 2',
         '!todo clear'
@@ -57,7 +56,7 @@ export const TodoHandler: CommandHandler = {
                 case 'list':
                     const todos = await TodoService.list(chat);
                     if (todos.length === 0) {
-                        await socket.sendMessage(chat, { text: 'No todos found in this chat.' });
+                        await socket.sendMessage(chat, { text: 'No todos found.' });
                         return;
                     }
 
@@ -66,37 +65,8 @@ export const TodoHandler: CommandHandler = {
                     ).join('\n');
 
                     await socket.sendMessage(chat, {
-                        text: '📝 Todo List for this chat:\n' + todoList
+                        text: '📝 Todo List:\n' + todoList
                     });
-                    break;
-
-                case 'list-all':
-                    const allTodos = await TodoService.listAllUserTodos(sender);
-                    if (allTodos.length === 0) {
-                        await socket.sendMessage(chat, { text: 'No todos found.' });
-                        return;
-                    }
-
-                    // Group todos by chat
-                    const todosByChat = allTodos.reduce((acc, todo) => {
-                        if (!acc[todo.chatId]) {
-                            acc[todo.chatId] = [];
-                        }
-                        acc[todo.chatId].push(todo);
-                        return acc;
-                    }, {} as Record<string, Todo[]>);
-
-                    let allTodosList = '📝 All Your Todos:\n\n';
-                    for (const [chatId, chatTodos] of Object.entries(todosByChat)) {
-                        const chatName = chatId.includes('@g.us') ? 'Group Chat' : 'Personal Chat';
-                        allTodosList += `${chatName}:\n`;
-                        allTodosList += (chatTodos as Todo[]).map((todo: Todo, index: number) =>
-                            `${index + 1}. ${todo.completed ? '✓' : '○'} ${todo.task}`
-                        ).join('\n');
-                        allTodosList += '\n\n';
-                    }
-
-                    await socket.sendMessage(chat, { text: allTodosList });
                     break;
 
                 case 'done':
@@ -146,13 +116,13 @@ export const TodoHandler: CommandHandler = {
                 case 'clear':
                     const count = await TodoService.clearCompleted(chat);
                     await socket.sendMessage(chat, {
-                        text: `🧹 Cleared ${count} completed todos from this chat.`
+                        text: `🧹 Cleared ${count} completed todos.`
                     });
                     break;
 
                 default:
                     await socket.sendMessage(chat, {
-                        text: 'Unknown subcommand. Use: add, list, list-all, done, delete, or clear.'
+                        text: 'Unknown subcommand. Use: add, list, done, delete, or clear.'
                     });
             }
         } catch (error) {
