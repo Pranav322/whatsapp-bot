@@ -4,13 +4,21 @@ import { TodoHandler } from './TodoHandler.js';
 import { NoteHandler } from './NoteHandler.js';
 import { TimerHandler } from './TimerHandler.js';
 import { GroupHandler } from './GroupHandler.js';
+import { StickerHandler } from './StickerHandler.js';
+import { SpotifyHandler, PlayHandler, PauseHandler, NextHandler, PreviousHandler } from './SpotifyHandler.js';
 
 const commands = [
     NotifyHandler,
     TodoHandler,
     NoteHandler,
     TimerHandler,
-    GroupHandler
+    GroupHandler,
+    StickerHandler,
+    SpotifyHandler,
+    PlayHandler,
+    PauseHandler,
+    NextHandler,
+    PreviousHandler
 ];
 
 export const HelpHandler: CommandHandler = {
@@ -29,11 +37,11 @@ export const HelpHandler: CommandHandler = {
             if (args.length === 0) {
                 // Show general help
                 const commandList = commands.map(cmd =>
-                    `!${cmd.name} - ${cmd.description}`
-                ).join('\n');
+                    `*!${cmd.name}*\nUsage: ${cmd.usage}\n${cmd.description}`
+                ).join('\n\n');
 
                 await socket.sendMessage(chat, {
-                    text: `📚 Available Commands:\n\n${commandList}\n\nType !help <command> for detailed usage.`
+                    text: `📚 *Available Commands:*\n\n${commandList}\n\nType !help <command> for detailed usage.`
                 });
                 return;
             }
