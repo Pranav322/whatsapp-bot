@@ -1,88 +1,68 @@
-# WhatsApp Reminder Bot 🤖
+# WhatsApp Assistant Bot 🤖
 
-A WhatsApp bot built with [Baileys](https://github.com/WhiskeySockets/Baileys) that can send you reminders.
+A lean, personal WhatsApp assistant built with [Baileys](https://github.com/WhiskeySockets/Baileys), PostgreSQL, and Drizzle ORM. Designed for private use to manage reminders, tasks, and utilities directly through WhatsApp DMs.
 
-## Features
+## 🚀 Features
 
-- **Set Reminders**: Use `/new <time> <message>` to set a reminder
-- **Flexible Time Formats**: Supports seconds, minutes, hours, and combinations
-- **Instant Confirmation**: Get confirmation when a reminder is set
-- **Push Notifications**: Receive reminder messages directly on WhatsApp
+- **Personal Reminders**: Set time-based notifications for yourself.
+- **Task Management**: Keep a persistent todo list.
+- **Notes**: Save and search through text snippets.
+- **Sticker Maker**: Convert images, GIFs, and videos to stickers instantly.
+- **Timers**: Set countdowns for quick alerts.
+- **Persistence**: Powered by PostgreSQL to ensure your data survives restarts.
 
-## Installation
+## 🛠️ Tech Stack
 
-```bash
-# Install dependencies
-npm install
+- **Runtime**: Node.js (ESM)
+- **WhatsApp**: Baileys (WhiskeySockets)
+- **Database**: PostgreSQL
+- **ORM**: Drizzle ORM
+- **Utilities**: Sharp (Image processing), Node-cron (Scheduling), Express (Health check/server)
 
-# Build the project
-npm run build
+## 📋 Commands
 
-# Start the bot
-npm start
-```
+| Command | Usage | Description |
+|---------|-------|-------------|
+| `!notify` | `!notify <task> <time>` | Set a reminder (e.g., `!notify call mom 30m`) |
+| `!todo` | `!todo <add/list/done/delete/clear>` | Manage your persistent todo list |
+| `!note` | `!note <save/list/view/delete/search>` | Manage your personal snippets |
+| `!sticker` | `!sticker [f/full]` | Convert media to sticker (reply or caption) |
+| `!timer` | `!timer <start/list/cancel>` | Set countdown timers |
+| `!help` | `!help [command]` | Show usage instructions |
 
-## Development
+## ⚙️ Setup
 
-```bash
-# Run in development mode with auto-reload
-npm run dev
-```
+### Prerequisites
+- Node.js (v18+)
+- PostgreSQL database
 
-## Usage
+### Installation
+1. Clone the repository.
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
+3. Configure your environment:
+   Create a `.env` file in the root:
+   ```env
+   DATABASE_URL=postgres://user:pass@host:port/db
+   PORT=3000
+   ```
+4. Build the project:
+   ```bash
+   npm run build
+   ```
 
-Send a message to your WhatsApp (the one connected to the bot) with the following format:
+### Running
+- **Development**: `npm run dev`
+- **Production**: `npm start`
 
-```
-/new <time> <message>
-```
+On first run, scan the QR code in your terminal using WhatsApp's **Linked Devices** feature.
 
-### Time Formats
+## 🔒 Security & Privacy
+- This bot is designed for **Direct Messages (DMs) only**.
+- It explicitly ignores group messages to ensure privacy and focus.
+- Authentication data is stored locally in `auth_info/`. **Never share this folder.**
 
-| Format | Description |
-|--------|-------------|
-| `5s` | 5 seconds |
-| `5m` | 5 minutes |
-| `1h` | 1 hour |
-| `1h30m` | 1 hour 30 minutes |
-| `2h15m30s` | 2 hours 15 minutes 30 seconds |
-
-### Examples
-
-```
-/new 5m Take a break
-/new 1h30m Team meeting
-/new 2h Check emails
-```
-
-## First Time Setup
-
-1. Run the bot using `npm start` or `npm run dev`
-2. A QR code will appear in the terminal
-3. Open WhatsApp on your phone
-4. Go to **Settings** > **Linked Devices** > **Link a Device**
-5. Scan the QR code
-6. You're connected! The bot will now listen for messages
-
-## Project Structure
-
-```
-src/
-├── index.ts                 # Main entry point
-├── handlers/
-│   └── messageHandler.ts    # Handles incoming messages
-├── services/
-│   └── reminderService.ts   # Manages reminders
-└── utils/
-    └── timeParser.ts        # Parses time strings
-```
-
-## Notes
-
-- The `auth_info/` folder contains your WhatsApp credentials. Keep it secure!
-- The bot uses in-memory storage for reminders. They will be lost if the bot restarts.
-- Maximum reminder duration is 24 hours.
-
-## License
-
+## 📄 License
 MIT
