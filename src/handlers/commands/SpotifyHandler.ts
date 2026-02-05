@@ -34,7 +34,7 @@ export const SpotifyHandler: CommandHandler = {
             if (error.message === 'NOT_LINKED') {
                 const authUrl = SpotifyService.getAuthUrl(sender);
                 await socket.sendMessage(chat, { 
-                    text: `❌ *Spotify account not linked.*\n\nClick this link to log in and authorize the bot:\n\n${authUrl}\n\n*The bot will automatically detect when you're finished.*` 
+                    text: `❌ *Spotify account not linked.*\n\n1. Click this link to log in: ${authUrl}\n2. You will be redirected to a page that won't load.\n3. *Copy the full URL* of that page and paste it here.` 
                 });
             } else if (error.message === 'NO_ACTIVE_DEVICE') {
                 await socket.sendMessage(chat, { text: '❌ No active Spotify device found. Please open Spotify on your phone/PC and start playing something.' });

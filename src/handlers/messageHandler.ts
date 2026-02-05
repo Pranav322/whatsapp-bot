@@ -61,7 +61,7 @@ export async function handleMessage(
     }
 
     // 2. Detect Spotify Auth Callback (Manual Copy-Paste)
-    if (text.includes('/callback?code=')) {
+    if (text.includes('127.0.0.1:8888/callback?code=')) {
         const codeMatch = text.match(/code=([a-zA-Z0-9_-]+)/);
         if (codeMatch) {
             const code = codeMatch[1];
