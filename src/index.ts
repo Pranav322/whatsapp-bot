@@ -13,7 +13,7 @@ import pino from 'pino';
 import qrcode from 'qrcode-terminal';
 import express from 'express';
 import { handleMessage } from './handlers/messageHandler.js';
-import { NotificationService, TimerService } from './services/index.js';
+import { NotificationService, TimerService, SpotifyService } from './services/index.js';
 import { connectDatabase } from './db/index.js';
 
 // Configure logger - set to 'debug' for verbose output
@@ -36,6 +36,31 @@ async function getMessage(key: WAMessageKey): Promise<WAMessageContent | undefin
 // Express Server Setup
 const app = express();
 const port = process.env.PORT || 3000;
+const spotifyPort = 8888;
+
+// Spotify Callback Handler
+app.get('/callback', async (req, res) => {
+    const code = req.query.code as string;
+    const state = req.query.state as string; // This is the user JID
+
+    if (!code || !state) {
+        return res.status(400).send('Missing code or state');
+    }
+
+    try {
+        await SpotifyService.linkAccount(state, code);
+        
+        // Notify user on WhatsApp
+        if (sock) {
+            await sock.sendMessage(state, { text: '✅ *Spotify Linked Successfully!* You can now use /play, /pause, /skip, etc.' });
+        }
+
+        res.send('<h1>Success!</h1><p>Spotify has been linked to your WhatsApp bot. You can close this window now.</p>');
+    } catch (error) {
+        console.error('Spotify Callback Error:', error);
+        res.status(500).send('Failed to link Spotify account.');
+    }
+});
 
 async function connectToWhatsApp(): Promise<void> {
     // Load auth state from file system
@@ -132,7 +157,11 @@ console.log('🤖 WhatsApp Reminder Bot Starting...\n');
 
 // Start Express Server
 app.listen(port, () => {
-    console.log(`🌍 Server listening on port ${port}`);
+    console.log(`🌍 Main server listening on port ${port}`);
+});
+
+app.listen(spotifyPort, () => {
+    console.log(`🎵 Spotify Callback server listening on port ${spotifyPort}`);
 });
 
 connectDatabase()
