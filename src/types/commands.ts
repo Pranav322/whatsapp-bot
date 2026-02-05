@@ -6,6 +6,7 @@ export interface CommandContext {
     chat: string;
     sender: string;
     args: string[];
+    commandName?: string;
 }
 
 export interface CommandHandler {

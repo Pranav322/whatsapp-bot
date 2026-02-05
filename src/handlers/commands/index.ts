@@ -13,6 +13,8 @@ export { TimerHandler } from './TimerHandler.js';
 export { HelpHandler } from './HelpHandler.js';
 export { StickerHandler } from './StickerHandler.js';
 
+import { SpotifyHandler } from './SpotifyHandler.js';
+
 // Map of command names to their handlers
 export const commandHandlers: Map<string, CommandHandler> = new Map([
     ['notify', NotifyHandler],
@@ -20,5 +22,10 @@ export const commandHandlers: Map<string, CommandHandler> = new Map([
     ['note', NoteHandler],
     ['timer', TimerHandler],
     ['help', HelpHandler],
-    ['sticker', StickerHandler]
+    ['sticker', StickerHandler],
+    ['spotify', SpotifyHandler],
+    ['play', SpotifyHandler],
+    ['pause', SpotifyHandler],
+    ['skip', SpotifyHandler],
+    ['next', SpotifyHandler]
 ]); 
