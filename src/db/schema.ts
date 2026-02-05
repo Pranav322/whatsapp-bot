@@ -7,6 +7,7 @@ export const users = pgTable('users', {
     lastActive: timestamp('last_active').defaultNow(),
     notificationsEnabled: boolean('notifications_enabled').default(true),
     timezone: text('timezone').default('UTC'),
+    spotifyRefreshToken: text('spotify_refresh_token'),
     createdAt: timestamp('created_at').defaultNow(),
     updatedAt: timestamp('updated_at').defaultNow(),
 });
