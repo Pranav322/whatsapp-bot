@@ -1,12 +1,12 @@
 import { WASocket, proto } from 'baileys';
 import { commandHandlers } from './commands/index.js';
-import { UserService } from '../services/index.js';
+import { UserService, InstagramService, SpotifyService } from '../services/index.js';
+import fs from 'fs';
 
 export async function handleMessage(
     sock: WASocket,
     message: proto.IWebMessageInfo
 ): Promise<void> {
-    // Check for required message key
     // Check for required message key
     if (!message.key) return;
 
@@ -15,7 +15,6 @@ export async function handleMessage(
 
     // Log incoming message for debugging
     console.log(`📩 Received message from ${remoteJid}:`, JSON.stringify(message.message));
-
 
     // Extract text from different message types
     const textContent =
@@ -30,18 +29,68 @@ export async function handleMessage(
     const text = textContent.trim();
     console.log(`Parsed text: "${text}"`);
 
-    // Handle commands
-    if (text.startsWith('!')) {
+    // 1. Detect Instagram Reels/Posts
+    const instaRegex = /https?:\/\/(www\.)?instagram\.com\/(reels?|p)\/([a-zA-Z0-9_-]+)/;
+    const instaMatch = text.match(instaRegex);
+
+    if (instaMatch) {
+        const url = instaMatch[0];
+        console.log(`🎯 Instagram link detected: ${url}`);
+        
         try {
+            await sock.sendMessage(remoteJid, { text: '⏳ Processing Instagram video... please wait.' }, { quoted: message as any });
+            
+            const videoPath = await InstagramService.downloadReel(url);
+            const videoBuffer = fs.readFileSync(videoPath);
+
+            await sock.sendMessage(remoteJid, { 
+                video: videoBuffer,
+                caption: '✅ Here is your Instagram video!',
+                mimetype: 'video/mp4'
+            }, { quoted: message as any });
+
+            // Cleanup
+            if (fs.existsSync(videoPath)) {
+                fs.unlinkSync(videoPath);
+            }
+            return; // Stop processing after handling the link
+        } catch (error) {
+            console.error('❌ Error handling Instagram link:', error);
+            await sock.sendMessage(remoteJid, { text: '❌ Failed to process Instagram video. The link might be private or invalid.' });
+        }
+    }
+
+    // 2. Detect Spotify Auth Callback (Manual Copy-Paste)
+    if (text.includes('/callback?code=')) {
+        const codeMatch = text.match(/code=([a-zA-Z0-9_-]+)/);
+        if (codeMatch) {
+            const code = codeMatch[1];
+            const sender = message.key.fromMe
+                ? sock.user?.id?.split(':')[0] + '@s.whatsapp.net'
+                : (message.key.participant || remoteJid);
+            
+            try {
+                await SpotifyService.linkAccount(sender!, code);
+                await sock.sendMessage(remoteJid, { text: '✅ *Spotify Linked Successfully!* You can now use /play, /pause, /skip, etc.' }, { quoted: message as any });
+                return;
+            } catch (error) {
+                await sock.sendMessage(remoteJid, { text: '❌ Failed to link Spotify. The code might be expired.' });
+                return;
+            }
+        }
+    }
+
+    // Handle commands
+    if (text.startsWith('!') || text.startsWith('/')) {
+        try {
+            const prefix = text[0];
             const [commandName, ...args] = text.slice(1).split(' ');
             const handler = commandHandlers.get(commandName.toLowerCase());
 
-            console.log(`Command detected: ${commandName}, Loopup result: ${handler ? 'Found' : 'Not Found'}`);
+            console.log(`Command detected: ${commandName}, Lookup result: ${handler ? 'Found' : 'Not Found'}`);
 
             if (handler) {
                 // Determine sender (User JID)
-                // In groups: participant is the user, remoteJid is the group
-                // In DMs: remoteJid is the user, participant is usually undefined
                 const sender = message.key.fromMe
                     ? sock.user?.id?.split(':')[0] + '@s.whatsapp.net'
                     : (message.key.participant || remoteJid);
@@ -56,11 +105,12 @@ export async function handleMessage(
                     socket: sock,
                     message,
                     chat: remoteJid, // Chat ID (Group or DM)
-                    sender,          // User ID (Who sent it)
-                    args
+                    sender: sender!,          // User ID (Who sent it)
+                    args,
+                    commandName
                 });
-            } else {
-                // Log available commands to help debug
+            } else if (prefix === '!') {
+                // Only log not found for ! commands to avoid conflict with standard / commands in groups
                 console.log('Available commands:', Array.from(commandHandlers.keys()));
             }
         } catch (error) {

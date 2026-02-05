@@ -37,6 +37,14 @@ export const StickerHandler: CommandHandler = {
             return;
         }
 
+        // Limit file size (prevent Memory DoS)
+        const fileLength = Number(targetMessage.imageMessage?.fileLength || targetMessage.videoMessage?.fileLength || targetMessage.stickerMessage?.fileLength || 0);
+        const maxSizeBytes = 10 * 1024 * 1024; // 10MB limit
+        if (fileLength > maxSizeBytes) {
+            await socket.sendMessage(chat, { text: '❌ File is too large. Please send a file smaller than 10MB.' });
+            return;
+        }
+
         try {
             // Retrieve the full message object for downloadMediaMessage
             let msgToDownload: any = message;

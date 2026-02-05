@@ -89,6 +89,7 @@ export class NotificationService {
 
         const job = cron.schedule(NotificationService.getScheduleExpression(reminder.time), async () => {
             await NotificationService.sendReminderNotification(reminder);
+            job.stop();
             NotificationService.reminderJobs.delete(reminder.id);
         });
 
@@ -108,6 +109,7 @@ export class NotificationService {
 
         const job = cron.schedule(NotificationService.getScheduleExpression(timer.endTime), async () => {
             await NotificationService.sendTimerNotification(timer);
+            job.stop();
             NotificationService.timerJobs.delete(timer.id);
         });
 
