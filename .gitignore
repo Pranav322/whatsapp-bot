@@ -28,6 +28,14 @@ yarn-error.log*
 .DS_Store
 Thumbs.db
 
+# WhatsApp Session Files
+session-*.json
+tctoken-*.json
+
 # TypeScript
 *.tsbuildinfo
 .agent/*
+
+# Cookies
+cookie.txt
+cookies.json
